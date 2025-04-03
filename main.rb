@@ -11,13 +11,14 @@ WindowHeight = 670
 set width: WindowWidth
 set height: WindowHeight
 
-period = 3.1
+$period = 3.1
 shot = false
 power = 1
 add = 0.5
 time = 0
 blocks = []
-hello = false
+collision = false
+$type_of_collision = nil
 
 #classes
 
@@ -42,40 +43,52 @@ class Block
     @width = width
     @height = height
   end
-  def draw
+
+  def draw()
     @block = Rectangle.new(
-    x:@x, y:@y, width:@width,height:@height,color:'red',z:5
+    x:@x, y:@y, width:@width,height:@height,color:'red',z:0
     )
   end
 
   def collisionDetection(blocks,golfball)
-    if golfball && collission_detected?(blocks,golfball)
-      @collision = true
-    else
-      @collision = false
-    end
-
+    return golfball && collission_detected?(blocks,golfball) #Måste skriva && golfball för att kolla om den är initierad
   end
 
   def collission_detected?(blocks,golfball)
-    blocks.any? do |other_block|
-      other_block.includehej(other_block.block,golfball)
+    blocks.any? do |block|
+      if golfball.x1 >= block.block.x1 - golfball.width && golfball.x2 <= block.block.x2 + golfball.width 
+        if golfball.y3 >= block.block.y1 - 3 && golfball.y3 <= block.block.y3
+          #puts "Golfboll faller på ett block"
+          $type_of_collision = [0,-1]
+          return true
+        elsif golfball.y1 <= block.block.y3 + 3 && golfball.y1 >= block.block.y1
+          #puts "Golfboll åker upp i ett block"
+          $type_of_collision = [0,1]
+          return true
+        end
+      end
+
+      if golfball.y1 >= block.block.y1 - golfball.height && golfball.y3 <= block.block.y3 + golfball.height
+        if golfball.x1 <= block.block.x2 + 3 && golfball.x1 >= block.block.x1
+          #puts "Golfboll åker vänster i ett block"
+          $type_of_collision = [1,0]
+          return true
+        elsif golfball.x2 >= block.block.x1 - 3 && golfball.x2 <= block.block.x2
+          #puts "Golfboll åker höger i ett block"
+          $type_of_collision = [-1,0]
+          return true
+        end
+      end
     end
-  end
-
-  def returnCollision()
-    return @collision
-  end
-
-  def includehej(other_square,golfball)
-    golfball.contains?(other_square.x1,other_square.y1) ||
-    golfball.contains?(other_square.x2,other_square.y2) ||
-    golfball.contains?(other_square.x3,other_square.y3) ||
-    golfball.contains?(other_square.x4,other_square.y4) 
   end
 end
 
 class Player
+  attr_accessor :x
+  attr_accessor :y
+  attr_accessor :width
+  attr_accessor :height
+  attr_accessor :golfball
   def initialize()
     @x = 100
     @y = 100
@@ -88,6 +101,8 @@ class Player
     @middlepoint = 1
     @zmulitplier = 1
     @onetime = true
+    @xspeed = 0
+    @yspeed = 0
   end
 
   def draw
@@ -99,27 +114,53 @@ class Player
     )
   end
 
-  def gravity()
-  end
-
   def move(bool,strength,meterx,metery,collision)
     @middlepoint = [@x + @width/2, @y + @height/2]
+
     if bool
       @speed = strength
+
+      p $type_of_collision
+      p "cos #{Math.cos($period) * 30}"
+      p "sin #{Math.sin($period) * 30}"
+      if collision
+        if $type_of_collision == [0,1]
+          if Math.cos($period) * 30 < 0
+            @speed = 0
+          end
+        elsif $type_of_collision == [0,-1]
+          p "hej"
+          if Math.cos($period) * 30 > 0
+            p "hej2"
+            @speed = 0
+          end
+        elsif $type_of_collision == [1,0]
+          if Math.sin($period) * 30 < 0
+            @speed = 0
+          end
+        elsif $type_of_collision == [-1,0]
+          if Math.sin($period) * 30 > 0
+            @speed = 0
+          end
+        end
+      end
       
       @xmultiplier = meterx + 5 - @middlepoint[0]
       @ymultiplier = metery + 5 - @middlepoint[1]
       @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
+
     end
 
     if collision && @onetime
-      @grav *= -1
-      @speed *= -0.7
+      if $type_of_collision[1] == 0
+        @xspeed *= -1
+      else
+        @yspeed *= -1
+        @grav *= -1
+      end
     end
 
-    p @grav
-
-    if collision 
+    if collision   
       @grav *= 0.75
       @speed *= 0.7
 
@@ -128,19 +169,19 @@ class Player
       if @grav > -0.2 && @grav < 0
         @grav = 0
       end
-
-      @x += @speed * (@xmultiplier/@zmulitplier)/2
-      @y += @speed * @ymultiplier/@zmulitplier + @grav
     else
       @onetime = true
-    
-      @x += @speed * (@xmultiplier/@zmulitplier)/2
-      @y += @speed * @ymultiplier/@zmulitplier + @grav
 
       if @grav < 7
         @grav += 0.05
       end
     end
+
+    @xspeed = @speed * (@xmultiplier/@zmulitplier)/2
+    @yspeed = @speed * @ymultiplier/@zmulitplier
+
+    @x += @xspeed
+    @y += @yspeed + @grav
 
     if @speed < 0.03 && @speed > -0.03
       @speed = 0.0
@@ -148,22 +189,16 @@ class Player
 
     @speed *= 0.985;
   end
-
-  def getEverything()
-    return [@x,@y,@width,@height,@golfball]
-  end
 end
 
 class PowerMeter
+  attr_accessor :x
+  attr_accessor :y
   def initialize
     @x = 100
     @y = 100
     @width = 10
     @height = 10
-  end
-
-  def returnPos()
-    return [@x,@y]
   end
 
   def draw(color)
@@ -175,9 +210,9 @@ class PowerMeter
     )
   end
 
-  def move(playerx,playery,playerwidth,playerheight,period)
-    @x = playerx + (playerwidth - @width)/2 + (Math.sin(period) * 30).to_i
-    @y = playery + (playerheight - @height)/2 + (Math.cos(period) * 30).to_i
+  def move(playerx,playery,playerwidth,playerheight)
+    @x = playerx + (playerwidth - @width)/2 + (Math.sin($period) * 30).to_i
+    @y = playery + (playerheight - @height)/2 + (Math.cos($period) * 30).to_i
   end
 end
 
@@ -186,9 +221,9 @@ end
 on :key_held do |event|
   case event.key
   when 'left'
-    period += 0.1
+    $period += 0.1
   when 'right'
-    period -= 0.1
+    $period -= 0.1
   when 'space'
     if power == 20
       add *= -1
@@ -211,25 +246,29 @@ player = Player.new
 powerMeter = PowerMeter.new
 background = Background.new
 
-blocks << Block.new(100,300,20,10)
+blocks << Block.new(0,WindowHeight-5,WindowWidth,5)
+blocks << Block.new(0,150,WindowWidth-50,10)
+blocks << Block.new(50,300,WindowWidth-50,10)
 
 update do
   clear
   blocks.each do |block|
     block.draw
-    block.collisionDetection(blocks,player.getEverything()[4])
-    if block.returnCollision()
-      hello = true
+    if block.collisionDetection(blocks,player.golfball)
+      collision = true
     else
-      hello = false
+      collision = false
     end
   end
+
   background.draw
-  powerMeter.draw(power)
+
   player.draw
-  player.move(shot,power,powerMeter.returnPos()[0],powerMeter.returnPos()[1],hello)
-  powerMeter.move(player.getEverything()[0],player.getEverything()[1],player.getEverything()[2],player.getEverything()[3],period)
-  player.gravity
+  player.move(shot,power,powerMeter.x,powerMeter.y,collision)
+
+  powerMeter.draw(power)
+  powerMeter.move(player.x,player.y,player.width,player.height)
+
   if shot 
     shot = false
     power = 1
