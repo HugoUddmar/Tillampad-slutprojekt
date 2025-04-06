@@ -19,6 +19,7 @@ time = 0
 blocks = []
 collision = false
 $type_of_collision = nil
+$pos = nil
 
 #classes
 
@@ -60,22 +61,24 @@ class Block
         if golfball.y3 >= block.block.y1 - 3 && golfball.y3 <= block.block.y3
           #puts "Golfboll faller på ett block"
           $type_of_collision = [0,-1]
+          $pos = [0,(block.block.y1 - 3) - golfball.height ]
           return true
         elsif golfball.y1 <= block.block.y3 + 3 && golfball.y1 >= block.block.y1
           #puts "Golfboll åker upp i ett block"
           $type_of_collision = [0,1]
+          $pos = [0,block.block.y3 + 5]
           return true
         end
-      end
-
-      if golfball.y1 >= block.block.y1 - golfball.height && golfball.y3 <= block.block.y3 + golfball.height
+      elsif golfball.y1 >= block.block.y1 - golfball.height && golfball.y3 <= block.block.y3 + golfball.height
         if golfball.x1 <= block.block.x2 + 3 && golfball.x1 >= block.block.x1
           #puts "Golfboll åker vänster i ett block"
           $type_of_collision = [1,0]
+          $pos = [block.block.x2 + 3,0]
           return true
         elsif golfball.x2 >= block.block.x1 - 3 && golfball.x2 <= block.block.x2
           #puts "Golfboll åker höger i ett block"
           $type_of_collision = [-1,0]
+          $pos = [(block.block.x1 - 3) - golfball.width,0]
           return true
         end
       end
@@ -119,19 +122,13 @@ class Player
 
     if bool
       @speed = strength
-
-      p $type_of_collision
-      p "cos #{Math.cos($period) * 30}"
-      p "sin #{Math.sin($period) * 30}"
       if collision
         if $type_of_collision == [0,1]
           if Math.cos($period) * 30 < 0
             @speed = 0
           end
         elsif $type_of_collision == [0,-1]
-          p "hej"
           if Math.cos($period) * 30 > 0
-            p "hej2"
             @speed = 0
           end
         elsif $type_of_collision == [1,0]
@@ -160,7 +157,13 @@ class Player
       end
     end
 
-    if collision   
+    if collision 
+      if $pos[0] == 0
+        @y = $pos[1]
+      elsif $pos[1] == 0
+        @x = $pos[0]
+      end
+
       @grav *= 0.75
       @speed *= 0.7
 
@@ -242,6 +245,7 @@ on :key_up do |event|
 end
 
 #update
+
 player = Player.new
 powerMeter = PowerMeter.new
 background = Background.new
@@ -256,8 +260,6 @@ update do
     block.draw
     if block.collisionDetection(blocks,player.golfball)
       collision = true
-    else
-      collision = false
     end
   end
 
@@ -273,6 +275,8 @@ update do
     shot = false
     power = 1
   end
+
+  collision = false
 end
 
 #run
