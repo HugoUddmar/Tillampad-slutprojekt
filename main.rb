@@ -20,7 +20,6 @@ blocks = []
 collision = false
 $type_of_collision = nil
 $pos = nil
-
 #classes
 
 class Background
@@ -36,11 +35,14 @@ end
 
 class Block
   attr_accessor :block
+  attr_accessor :x
+  attr_accessor :y
+  attr_accessor :width
+  attr_accessor :height
   def initialize(x,y,width,height)
     @collision = false
     @x = x
     @y = y
-    
     @width = width
     @height = height
   end
@@ -55,33 +57,65 @@ class Block
     return golfball && collission_detected?(blocks,golfball) #Måste skriva && golfball för att kolla om den är initierad
   end
 
+  def abs(value)
+    value1 = 0
+    value1 = value
+    if value1 < 0
+      value1 *= -1
+    end
+    return value1
+  end
+
   def collission_detected?(blocks,golfball)
-    blocks.any? do |block|
-      if golfball.x1 >= block.block.x1 - golfball.width && golfball.x2 <= block.block.x2 + golfball.width 
-        if golfball.y3 >= block.block.y1 - 3 && golfball.y3 <= block.block.y3
+    i = 0
+    while i < blocks.length
+
+      blockx1 = blocks[i].x
+      blockx2 = blocks[i].x + block.width
+      blocky1 = blocks[i].y
+      blocky3 = blocks[i].y + block.height
+      
+    
+      if golfball.x1 >= blockx1 - golfball.width + 1 && golfball.x2 <= blockx2 + golfball.width - 1 
+        if golfball.y3 >= blocky1 && golfball.y3 <= blocky1 + 4
           #puts "Golfboll faller på ett block"
-          $type_of_collision = [0,-1]
-          $pos = [0,(block.block.y1 - 3) - golfball.height ]
+          
+          $type_of_collision = "down"
+          #p $type_of_collision
+          $pos = [0,blocky1 - golfball.height ]
+          
           return true
-        elsif golfball.y1 <= block.block.y3 + 3 && golfball.y1 >= block.block.y1
+        elsif golfball.y1 <= blocky3 && golfball.y1 >= blocky1 - 4
           #puts "Golfboll åker upp i ett block"
-          $type_of_collision = [0,1]
-          $pos = [0,block.block.y3 + 5]
+         
+          $type_of_collision = "up"
+          #p $type_of_collision
+          $pos = [0,blocky3 + 1]
+        
+          
           return true
         end
-      elsif golfball.y1 >= block.block.y1 - golfball.height && golfball.y3 <= block.block.y3 + golfball.height
-        if golfball.x1 <= block.block.x2 + 3 && golfball.x1 >= block.block.x1
+      elsif golfball.y1 >= blocky1 - golfball.height + 1 && golfball.y3 <= blocky3 + golfball.height - 1
+        if golfball.x1 <= blockx2 + 2 && golfball.x1 >= blockx2 - 4
           #puts "Golfboll åker vänster i ett block"
-          $type_of_collision = [1,0]
-          $pos = [block.block.x2 + 3,0]
+          
+          $type_of_collision = "left"
+          #p $type_of_collision
+          $pos = [blockx2 + 3,0]
+          
+          
           return true
-        elsif golfball.x2 >= block.block.x1 - 3 && golfball.x2 <= block.block.x2
+        elsif golfball.x2 >= blockx1 - 2 && golfball.x2 <= blockx1 + 4
           #puts "Golfboll åker höger i ett block"
-          $type_of_collision = [-1,0]
-          $pos = [(block.block.x1 - 3) - golfball.width,0]
+         
+          $type_of_collision = "right"
+          #p $type_of_collision
+          $pos = [(blockx1 - 3) - golfball.width,0]
+
           return true
         end
       end
+      i += 1
     end
   end
 end
@@ -95,7 +129,6 @@ class Player
   def initialize()
     @x = 100
     @y = 100
-    @speed = 0
     @grav = 0
     @width = 20
     @height = 20
@@ -121,35 +154,16 @@ class Player
     @middlepoint = [@x + @width/2, @y + @height/2]
 
     if bool
-      @speed = strength
-      if collision
-        if $type_of_collision == [0,1]
-          if Math.cos($period) * 30 < 0
-            @speed = 0
-          end
-        elsif $type_of_collision == [0,-1]
-          if Math.cos($period) * 30 > 0
-            @speed = 0
-          end
-        elsif $type_of_collision == [1,0]
-          if Math.sin($period) * 30 < 0
-            @speed = 0
-          end
-        elsif $type_of_collision == [-1,0]
-          if Math.sin($period) * 30 > 0
-            @speed = 0
-          end
-        end
-      end
-      
       @xmultiplier = meterx + 5 - @middlepoint[0]
       @ymultiplier = metery + 5 - @middlepoint[1]
       @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
 
+      @xspeed = strength * (@xmultiplier/@zmulitplier)/2
+      @yspeed = strength * @ymultiplier/@zmulitplier
     end
 
     if collision && @onetime
-      if $type_of_collision[1] == 0
+      if $type_of_collision == "left" || $type_of_collision == "right"
         @xspeed *= -1
       else
         @yspeed *= -1
@@ -164,8 +178,9 @@ class Player
         @x = $pos[0]
       end
 
-      @grav *= 0.75
-      @speed *= 0.7
+      @xspeed *= 0.7
+      @yspeed *= 0.7
+      @grav *= 0.7
 
       @onetime = false
 
@@ -180,17 +195,19 @@ class Player
       end
     end
 
-    @xspeed = @speed * (@xmultiplier/@zmulitplier)/2
-    @yspeed = @speed * @ymultiplier/@zmulitplier
-
     @x += @xspeed
     @y += @yspeed + @grav
 
-    if @speed < 0.03 && @speed > -0.03
-      @speed = 0.0
+    if @xspeed < 0.03 && @xspeed > -0.03
+      @xspeed = 0.0
     end
 
-    @speed *= 0.985;
+    if @yspeed < 0.03 && @yspeed > -0.03
+      @yspeed = 0.0
+    end
+
+    @xspeed *= 0.99;
+    @yspeed *= 0.99
   end
 end
 
@@ -250,18 +267,16 @@ player = Player.new
 powerMeter = PowerMeter.new
 background = Background.new
 
-blocks << Block.new(0,WindowHeight-5,WindowWidth,5)
+blocks << Block.new(0,WindowHeight-5,WindowWidth,10)
 blocks << Block.new(0,150,WindowWidth-50,10)
 blocks << Block.new(50,300,WindowWidth-50,10)
+blocks << Block.new(WindowWidth-5,0,10,WindowHeight)
+blocks << Block.new(300, 400, 20, 100)
+blocks << Block.new(0,0,10,WindowHeight)
+blocks << Block.new(0,0,WindowWidth,10)
 
 update do
   clear
-  blocks.each do |block|
-    block.draw
-    if block.collisionDetection(blocks,player.golfball)
-      collision = true
-    end
-  end
 
   background.draw
 
@@ -277,6 +292,13 @@ update do
   end
 
   collision = false
+
+  blocks.each do |block|
+    block.draw
+    if block.collisionDetection(blocks,player.golfball)
+      collision = true
+    end
+  end
 end
 
 #run
