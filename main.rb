@@ -20,6 +20,7 @@ blocks = []
 collision = false
 $type_of_collision = nil
 $pos = nil
+$oldpos = nil
 #classes
 
 class Background
@@ -53,70 +54,129 @@ class Block
     )
   end
 
-  def collisionDetection(blocks,golfball)
-    return golfball && collission_detected?(blocks,golfball) #Måste skriva && golfball för att kolla om den är initierad
+  def collisionDetection(golfball)
+    return golfball && collission_detected?(golfball) #Måste skriva && golfball för att kolla om den är initierad
   end
 
-  def abs(value)
-    value1 = 0
-    value1 = value
-    if value1 < 0
-      value1 *= -1
-    end
-    return value1
-  end
-
-  def collission_detected?(blocks,golfball)
-    i = 0
-    while i < blocks.length
-
-      blockx1 = blocks[i].x
-      blockx2 = blocks[i].x + block.width
-      blocky1 = blocks[i].y
-      blocky3 = blocks[i].y + block.height
-      
+  def collission_detected?(golfball)
+    blockx1 = @x
+    blockx2 = @x + @width
+    blocky1 = @y
+    blocky3 = @y + @height
+  
     
-      if golfball.x1 >= blockx1 - golfball.width + 1 && golfball.x2 <= blockx2 + golfball.width - 1 
-        if golfball.y3 >= blocky1 && golfball.y3 <= blocky1 + 4
-          #puts "Golfboll faller på ett block"
-          
-          $type_of_collision = "down"
-          #p $type_of_collision
-          $pos = [0,blocky1 - golfball.height ]
-          
-          return true
-        elsif golfball.y1 <= blocky3 && golfball.y1 >= blocky1 - 4
-          #puts "Golfboll åker upp i ett block"
-         
-          $type_of_collision = "up"
-          #p $type_of_collision
-          $pos = [0,blocky3 + 1]
+    if golfball.x1 >= blockx1 - golfball.width + 1 && golfball.x2 <= blockx2 + golfball.width - 1
+      if golfball.y1 >= blocky1 && golfball.y3 <= blocky3
+        if golfball.x1 <= blockx2
+          #Golfbollen åker vänster i ett block
         
-          
-          return true
-        end
-      elsif golfball.y1 >= blocky1 - golfball.height + 1 && golfball.y3 <= blocky3 + golfball.height - 1
-        if golfball.x1 <= blockx2 + 2 && golfball.x1 >= blockx2 - 4
-          #puts "Golfboll åker vänster i ett block"
-          
           $type_of_collision = "left"
-          #p $type_of_collision
-          $pos = [blockx2 + 3,0]
-          
-          
+          $pos = $oldpos
+        
           return true
-        elsif golfball.x2 >= blockx1 - 2 && golfball.x2 <= blockx1 + 4
-          #puts "Golfboll åker höger i ett block"
-         
+        else
+          #Golfbollen åker höger i ett block
+        
           $type_of_collision = "right"
-          #p $type_of_collision
-          $pos = [(blockx1 - 3) - golfball.width,0]
-
+          $pos = $oldpos
+        
           return true
         end
+      elsif golfball.x1 <= blockx2 && golfball.x2 >= blockx2 && golfball.y1 >= blocky1 - golfball.height && golfball.y3 <= blocky3 + golfball.height
+        nbr1 = blockx2 - golfball.x1
+        if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
+          nbr2 = golfball.y3 - blocky1
+          if nbr2 > nbr1
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "left"
+            $pos = $oldpos
+         
+            return true
+          else
+            #Golfbollen faller ner i ett block
+        
+            $type_of_collision = "down"
+            $pos = $oldpos
+         
+            return true
+          end
+        else
+          nbr2 = blocky3 - golfball.y1
+          if nbr2 > nbr1
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "left"
+            $pos = $oldpos
+        
+            return true
+          else
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "up"
+            $pos = $oldpos
+        
+            return true
+          end
+        end
+      elsif golfball.x2 >= blockx1 && golfball.x1 <= blockx1 && golfball.y1 >= blocky1 - golfball.height && golfball.y3 <= blocky3 + golfball.height
+        nbr1 = golfball.x2 - blockx1
+        if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
+          nbr2 = golfball.y3 - blocky1
+          if nbr2 > nbr1
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "right"
+            p $type_of_collision
+            $pos = $oldpos
+         
+            return true
+          else
+            #Golfbollen faller ner i ett block
+        
+            $type_of_collision = "down"
+            p $type_of_collision
+            $pos = $oldpos
+         
+            return true
+          end
+        else
+          nbr2 = blocky3 - golfball.y1
+          if nbr2 > nbr1
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "right"
+            p $type_of_collision
+            $pos = $oldpos
+        
+            return true
+          else
+            #Golfbollen åker vänster i ett block
+        
+            $type_of_collision = "up"
+            p $type_of_collision
+            $pos = $oldpos
+        
+            return true
+          end
+        end
+      elsif golfball.y3 >= blocky1 && golfball.y1 <= blocky3
+        #Golfbollen faller på ett block
+        
+        $type_of_collision = "down"
+        $pos = $oldpos
+        
+        return true
+      elsif golfball.y1 <= blocky3 && golfball.y3 >= blocky1
+        #Golfbollen åker upp i ett block
+       
+        $type_of_collision = "up"
+        $pos = $oldpos
+
+        return true
       end
-      i += 1
     end
+    return false
   end
 end
 
@@ -158,11 +218,13 @@ class Player
       @ymultiplier = metery + 5 - @middlepoint[1]
       @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
 
-      @xspeed = strength * (@xmultiplier/@zmulitplier)/2
-      @yspeed = strength * @ymultiplier/@zmulitplier
+      @xspeed += strength * (@xmultiplier/@zmulitplier)/2
+      @yspeed += strength * @ymultiplier/@zmulitplier
     end
 
     if collision && @onetime
+      @onetime = false
+
       if $type_of_collision == "left" || $type_of_collision == "right"
         @xspeed *= -1
       else
@@ -172,17 +234,12 @@ class Player
     end
 
     if collision 
-      if $pos[0] == 0
-        @y = $pos[1]
-      elsif $pos[1] == 0
-        @x = $pos[0]
-      end
+      @y = $pos[1]
+      @x = $pos[0]
 
       @xspeed *= 0.7
       @yspeed *= 0.7
       @grav *= 0.7
-
-      @onetime = false
 
       if @grav > -0.2 && @grav < 0
         @grav = 0
@@ -198,11 +255,11 @@ class Player
     @x += @xspeed
     @y += @yspeed + @grav
 
-    if @xspeed < 0.03 && @xspeed > -0.03
+    if @xspeed < 0.1 && @xspeed > -0.1
       @xspeed = 0.0
     end
 
-    if @yspeed < 0.03 && @yspeed > -0.03
+    if @yspeed < 0.1 && @yspeed > -0.1
       @yspeed = 0.0
     end
 
@@ -267,37 +324,45 @@ player = Player.new
 powerMeter = PowerMeter.new
 background = Background.new
 
-blocks << Block.new(0,WindowHeight-5,WindowWidth,10)
-blocks << Block.new(0,150,WindowWidth-50,10)
-blocks << Block.new(50,300,WindowWidth-50,10)
-blocks << Block.new(WindowWidth-5,0,10,WindowHeight)
+blocks << Block.new(0,WindowHeight-5,WindowWidth,20)
+blocks << Block.new(0,150,WindowWidth-50,20)
+blocks << Block.new(50,300,WindowWidth-50,20)
+blocks << Block.new(WindowWidth-5,0,20,WindowHeight)
 blocks << Block.new(300, 400, 20, 100)
-blocks << Block.new(0,0,10,WindowHeight)
-blocks << Block.new(0,0,WindowWidth,10)
+blocks << Block.new(0,0,20,WindowHeight)
+blocks << Block.new(0,0,WindowWidth,20)
 
 update do
   clear
+  background.draw()
+  #p "x:#{player.x }"
+  #p "y: #{player.y}"
 
-  background.draw
+  i = 0
+  collision = false
+  while i < blocks.length
+    blocks[i].draw
+    if blocks[i].collisionDetection(player.golfball) && !collision
+      collision = true
+    end
+    i += 1
+  end
 
-  player.draw
+  #p $type_of_collision
+
+  if !collision
+    $oldpos = [player.x,player.y]
+  end
+
   player.move(shot,power,powerMeter.x,powerMeter.y,collision)
-
-  powerMeter.draw(power)
   powerMeter.move(player.x,player.y,player.width,player.height)
+
+  player.draw()
+  powerMeter.draw(power)
 
   if shot 
     shot = false
     power = 1
-  end
-
-  collision = false
-
-  blocks.each do |block|
-    block.draw
-    if block.collisionDetection(blocks,player.golfball)
-      collision = true
-    end
   end
 end
 
