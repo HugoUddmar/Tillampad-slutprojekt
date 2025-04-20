@@ -1,6 +1,8 @@
 
 
 #Svåra problem: Kollision, att veta vilken typ av kollision som sker, och hantera det på rätt sätt
+#Highscore spara i fil: ha flera rader istället för en rad
+#
 
 #initialize
 
@@ -19,14 +21,18 @@ add = 1
 collision = false
 
 $howmanyshots = 0
+
 $portal = false
+
 $type_of_collision = nil
 $pos = nil
 $oldpos = nil
+
 $menu = true
 $level = 0
 $ballingoal = false
 $endText = ""
+
 $onetime = true
 
 $highscoreLevel1 = ""
@@ -54,8 +60,12 @@ while i < highscore.length
 end
 
 class Background
+  def initialize(color)
+    @color = color
+  end
+
   def draw
-    
+    Rectangle.new(x:0,y:0,width:Window.width,height:Window.height,color:@color,z:0)
   end
 end
 
@@ -67,7 +77,7 @@ class Menu
     #level1
 
     $level1 = Rectangle.new(
-      x:(Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:0
+      x:(Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
     )
 
     Text.new(
@@ -76,13 +86,13 @@ class Menu
       style: 'bold',
       size: 30,
       color: 'blue',
-      z: 10
+      z: 1
     )
 
     #level2
 
     $level2 = Rectangle.new(
-      x:(Window.width/2)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:0
+      x:(Window.width/2)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
     )
 
     Text.new(
@@ -91,13 +101,13 @@ class Menu
       style: 'bold',
       size: 30,
       color: 'blue',
-      z: 10
+      z: 1
     )
 
     #level3
 
     $level3 = Rectangle.new(
-      x:(3*Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:0
+      x:(3*Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
     )
 
     Text.new(
@@ -106,13 +116,13 @@ class Menu
       style: 'bold',
       size: 30,
       color: 'blue',
-      z: 10
+      z: 1
     )
 
     #quit
 
     $quit = Rectangle.new(
-      x:(Window.width/2)-100, y:(Window.height/2)+100, width:200,height:100,color:'white',z:0
+      x:(Window.width/2)-100, y:(Window.height/2)+100, width:200,height:100,color:'white',z:1
     )
 
     Text.new(
@@ -121,22 +131,23 @@ class Menu
       style: 'bold',
       size: 30,
       color: 'blue',
-      z: 10
+      z: 1
     )
   end
 end
 
 class Block
-  def initialize(x,y,width,height)
+  def initialize(x,y,width,height,color)
     @x = x
     @y = y
     @width = width
     @height = height
+    @color = color
   end
 
   def draw()
     Rectangle.new(
-    x:@x, y:@y, width:@width,height:@height,color:'red',z:0
+    x:@x, y:@y, width:@width,height:@height,color:@color,z:1
     )
   end
 
@@ -148,11 +159,11 @@ class Block
     blockx1 = @x
     blockx2 = @x + @width
     blocky1 = @y
-    blocky3 = @y + @height
+    blocky2 = @y + @height
   
     
-    if golfball.x1 >= blockx1 - golfball.width && golfball.x2 <= blockx2 + golfball.width
-      if golfball.y1 >= blocky1 && golfball.y3 <= blocky3
+    if golfball.x2 > blockx1 && golfball.x1 < blockx2
+      if golfball.y1 >= blocky1 && golfball.y3 <= blocky2
         if golfball.x1 <= blockx2
           #Golfbollen åker vänster i ett block
         
@@ -168,7 +179,7 @@ class Block
         
           return true
         end
-      elsif golfball.x1 <= blockx2 && golfball.x2 >= blockx2 && golfball.y1 >= blocky1 - golfball.height && golfball.y3 <= blocky3 + golfball.height
+      elsif golfball.x1 <= blockx2 && golfball.x2 >= blockx2 && golfball.y2 >= blocky1 && golfball.y1 <= blocky2
         nbr1 = blockx2 - golfball.x1
         if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
           nbr2 = golfball.y3 - blocky1
@@ -188,7 +199,7 @@ class Block
             return true
           end
         else
-          nbr2 = blocky3 - golfball.y1
+          nbr2 = blocky2 - golfball.y1
           if nbr2 > nbr1
             #Golfbollen åker vänster i ett block
         
@@ -205,7 +216,7 @@ class Block
             return true
           end
         end
-      elsif golfball.x2 >= blockx1 && golfball.x1 <= blockx1 && golfball.y1 >= blocky1 - golfball.height && golfball.y3 <= blocky3 + golfball.height
+      elsif golfball.x2 >= blockx1 && golfball.x1 <= blockx1 && golfball.y2 >= blocky1 && golfball.y1 <= blocky2
         nbr1 = golfball.x2 - blockx1
         if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
           nbr2 = golfball.y3 - blocky1
@@ -225,7 +236,7 @@ class Block
             return true
           end
         else
-          nbr2 = blocky3 - golfball.y1
+          nbr2 = blocky2 - golfball.y1
           if nbr2 > nbr1
             #Golfbollen åker höger i ett block
         
@@ -242,14 +253,14 @@ class Block
             return true
           end
         end
-      elsif golfball.y3 >= blocky1 && golfball.y1 <= blocky3
+      elsif golfball.y3 >= blocky1 && golfball.y1 <= blocky2
         #Golfbollen faller på ett block
         
         $type_of_collision = "down"
         $pos = $oldpos
         
         return true
-      elsif golfball.y1 <= blocky3 && golfball.y3 >= blocky1
+      elsif golfball.y1 <= blocky2 && golfball.y3 >= blocky1
         #Golfbollen åker upp i ett block
        
         $type_of_collision = "up"
@@ -264,12 +275,24 @@ end
 
 class Howmanyshots
   def draw()
+    if $level == 3
+      $howmanyshots = Time.now.strftime("%H%M%S")
+      hour = $howmanyshots[0..1].to_i - $beginTime[0..1].to_i 
+      hour *= 3600
+
+      minute = $howmanyshots[2..3].to_i - $beginTime[2..3].to_i 
+      minute *= 60
+
+      second = $howmanyshots[4..5].to_i - $beginTime[4..5].to_i 
+
+      $howmanyshots = hour + minute + second
+    end
     Text.new(
       "#{$howmanyshots}",
       x: 0, y: 0,
       size: 40,
       color: 'white',
-      z: 10
+      z: 2
     )
   end
 end
@@ -303,7 +326,7 @@ class Player
     x: @x, y: @y,
     size:@width,
     color: 'teal',
-    z: 10
+    z: 2
     )
   end
 
@@ -380,7 +403,7 @@ class Goal
 
   def draw()
     Rectangle.new(
-    x:@x, y:@y, width:30,height:30,color:'yellow',z:5
+    x:@x, y:@y, width:30,height:30,color:'yellow',z:2
     )
 
     Text.new(
@@ -389,7 +412,7 @@ class Goal
       style: 'bold',
       size: 12,
       color: 'blue',
-      z: 10
+      z: 3
     )
   end
 
@@ -401,17 +424,11 @@ class Goal
     blockx1 = @x
     blockx2 = @x + 30
     blocky1 = @y
-    blocky3 = @y + 30
+    blocky2 = @y + 30
   
-    
-    if golfball.x1 >= blockx1 - golfball.width && golfball.x2 <= blockx2 + golfball.width
-      if golfball.y3 >= blocky1 && golfball.y1 <= blocky3
-        #Golfbollen faller på ett block
-        
-        $type_of_collision = "down"
-        $pos = $oldpos
+    if golfball.x2 > blockx1 && golfball.x1 < blockx2 
+      if golfball.y3 >= blocky1 && golfball.y1 <= blocky2
         $ballingoal = true
-        return true
       end
     end
     return false
@@ -426,11 +443,11 @@ class Portal
 
   def draw()
     Rectangle.new(
-    x:@x, y:@y, width:30,height:30,color:'purple',z:5
+    x:@x, y:@y, width:30,height:30,color:'purple',z:2
     )
 
     Rectangle.new(
-      x: 1550,y:Window.height-50, width:30, height:30, color:'purple', z:5
+      x: 1550,y:Window.height-50, width:30, height:30, color:'purple', z:2
     )
   end
 
@@ -442,13 +459,15 @@ class Portal
     blockx1 = @x
     blockx2 = @x + 30
     blocky1 = @y
-    blocky3 = @y + 30
+    blocky2 = @y + 30
   
     
-    if golfball.x1 >= blockx1 - golfball.width && golfball.x2 <= blockx2 + golfball.width
-      if golfball.y1 >= blocky1 - golfball.width && golfball.y2 <= blocky3 + golfball.width
+    if golfball.x2 > blockx1 && golfball.x1 < blockx2
+      if golfball.y3 >= blocky1 && golfball.y1 <= blocky2
         $portal = true
       end
+    else
+      $portal = false
     end
 
     return false
@@ -473,7 +492,7 @@ class PowerMeter
       x:@x,y:@y,
       width:@width, height: @height,
       color: [1-color/40.0, 1-color/40.0, 1-color/40.0, 1],
-      z:1
+      z:3
     )
   end
 
@@ -491,14 +510,24 @@ class MovingBlock
     @width = width
     @height = height
     @color = color
+    @xadd = 0
+    @yadd = 0
   end
 
   def draw()
+    @xadd += rand(-0.6..0.0)
+    @yadd += rand(-0.2..0.2)
+    @x += @xadd
+    @y += @yadd
+    way = rand(0..1)
+    if way == 0
+      @width += rand(0.0..2.0)
+    else
+      @height += rand(0.0..2.0)
+    end
     Rectangle.new(
-    x:@x, y:@y, width:@width,height:@height,color:@color,z:5
+    x:@x, y:@y, width:@width,height:@height,color:@color,z:1
     )
-
-    @x -= rand(1..4)
   end
 
   def collisionDetection(golfball)
@@ -507,17 +536,15 @@ class MovingBlock
 
   def collission_detected?(golfball)
     blockx1 = @x
-    blockx2 = @x + 30
+    blockx2 = @x + @width
     blocky1 = @y
-    blocky3 = @y + 30
+    blocky2 = @y + @height
   
-    
-    if golfball.x1 >= blockx1 - golfball.width && golfball.x2 <= blockx2 + golfball.width
-      if golfball.y1 >= blocky1 - golfball.width && golfball.y2 <= blocky3 + golfball.width
+    if golfball.x2 > blockx1 && golfball.x1 < blockx2 
+      if golfball.y3 >= blocky1 && golfball.y1 <= blocky2
         $ballingoal = true
       end
     end
-
     return false
   end
 end
@@ -531,7 +558,16 @@ on :key_held do |event|
   when 'right'
     period -= Math::PI/90
   when 'space'
-    if $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
+    if $level == 3
+      if $onetime
+        if power == 40
+          add *= -1
+        elsif power == 0
+          add *= -1
+        end
+        power += add
+      end
+    elsif $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
       if power == 40
         add *= -1
       elsif power == 0
@@ -552,25 +588,25 @@ on :mouse_down do |event|
       $player = nil
       $player = Player.new(120,100)
       $blocks = []
-      $blocks << Block.new(0,0,Window.width,20)
-      $blocks << Block.new(0,0,20,Window.height)
-      $blocks << Block.new(0,Window.height-20,Window.width,20)
-      $blocks << Block.new(Window.width-20,0,20,Window.height)
+      $blocks << Block.new(0,0,Window.width,20,"gray")
+      $blocks << Block.new(0,0,20,Window.height,"gray")
+      $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
+      $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
 
-      $blocks << Block.new(20,350,Window.width-350,100)
-      $blocks << Block.new(220,200,350,150)
-      $blocks << Block.new(570,250,350,100)
-      $blocks << Block.new(920,300,350,50)
-      $blocks << Block.new(Window.width-330,150, 50, 450)
-      $blocks << Block.new(Window.width-330,600,150,50)
-      $blocks << Block.new(Window.width-230,150, 50, 450)
+      $blocks << Block.new(20,350,Window.width-350,100,"white")
+      $blocks << Block.new(220,200,350,150,"white")
+      $blocks << Block.new(570,250,350,100,"white")
+      $blocks << Block.new(920,300,350,50,"white")
+      $blocks << Block.new(Window.width-330,150, 50, 450,"white")
+      $blocks << Block.new(Window.width-330,600,150,50,"white")
+      $blocks << Block.new(Window.width-230,150, 50, 450,"white")
 
-      $blocks << Block.new(1350,750, 200, 400)
-      $blocks << Block.new(1150,520, 200, 300)
-      $blocks << Block.new(700,400, 70, 580)
-      $blocks << Block.new(770,930, 400, 50)
-      $blocks << Block.new(20,800, 80, 50)
-      $blocks << Block.new(170,600, 90, 70)
+      $blocks << Block.new(1350,750, 200, 400,"brown")
+      $blocks << Block.new(1150,520, 200, 300,"brown")
+      $blocks << Block.new(700,400, 70, 580,"green")
+      $blocks << Block.new(770,930, 400, 50,"green")
+      $blocks << Block.new(20,800, 80, 50,"green")
+      $blocks << Block.new(170,600, 90, 70,"green")
 
       $blocks << Goal.new(200,600)
     elsif $menu && $level2.contains?(event.x,event.y)
@@ -580,38 +616,40 @@ on :mouse_down do |event|
       $player = nil
       $player = Player.new(Window.width/2, Window.height-70)
       $blocks = []
-      $blocks << Block.new(0,0,Window.width,20)
-      $blocks << Block.new(0,0,20,Window.height)
-      $blocks << Block.new(0,Window.height-20,Window.width,20)
-      $blocks << Block.new(Window.width-20,0,20,Window.height)
+      $blocks << Block.new(0,0,Window.width,20,"gray")
+      $blocks << Block.new(0,0,20,Window.height,"gray")
+      $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
+      $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
 
-      $blocks << Block.new(Window.width*0.4,150,40, Window.height-170)
-      $blocks << Block.new(Window.width*0.6,20,40, Window.height-40)
-      $blocks << Block.new(Window.width*0.4 + 40,750,170, 50)
-      $blocks << Block.new(Window.width*0.4 + 200,500,185, 50)
-      $blocks << Block.new(Window.width*0.4 + 40,250,170, 50)
+      $blocks << Block.new(Window.width*0.4,150,40, Window.height-170,"black")
+      $blocks << Block.new(Window.width*0.6,20,40, Window.height-40,"black")
+      $blocks << Block.new(Window.width*0.4 + 40,750,170, 50,"black")
+      $blocks << Block.new(Window.width*0.4 + 200,500,185, 50,"black")
+      $blocks << Block.new(Window.width*0.4 + 40,250,170, 50,"black")
 
-      $blocks << Block.new(100,240,615, 50)
-      $blocks << Block.new(700, 500,70, 70)
-      $blocks << Block.new(20, 500,200, 70)
-      $blocks << Portal.new(100, 470)
-      $blocks << Block.new(1400,600, 350,50)
-      $blocks << Block.new(1600,130, 100,50)
+      $blocks << Block.new(100,240,615, 50,"yellow")
+      $blocks << Block.new(700, 500,70, 70,"red")
+      $blocks << Block.new(20, 500,200, 70,"navy")
+      $blocks << Block.new(1400,600, 350,50,"red")
+      $blocks << Block.new(1600,130, 100,50,"navy")
 
+      $blocks << Portal.new(100, 470,)
       $blocks << Goal.new(Window.width-300,130)
     elsif $menu && $level3.contains?(event.x,event.y)
+      $beginTime = Time.now.strftime("%H%M%S")
       $menu = false
       $level = 3
+      $index = 5
+      $onetime = false
 
       $player = nil
-      $player = Player.new(100,100)
+      $player = Player.new(100,1000)
       $blocks = []
-      $blocks << Block.new(0,0,Window.width,20)
-      $blocks << Block.new(0,0,20,Window.height)
-      $blocks << Block.new(0,Window.height-20,Window.width,20)
-      $blocks << Block.new(Window.width-20,0,20,Window.height)
-
-      $blocks << Goal.new(Window.width-50,Window.height-20)
+      $blocks << Block.new(0,0,Window.width,20,"gray")
+      $blocks << Block.new(0,0,20,Window.height,"gray")
+      $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
+      $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
+      $blocks << Block.new(Window.width/2 - 50,Window.height/2 - 50,100,100,"gray")
     elsif $menu && $quit.contains?(event.x,event.y)
       close
     end
@@ -621,7 +659,12 @@ end
 on :key_up do |event|
   case event.key
   when 'space'
-    if $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
+    if $level == 3
+      if $onetime
+        $onetime = false
+        shot = true
+      end
+    elsif $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
       shot = true
       $howmanyshots += 1
     end
@@ -639,12 +682,11 @@ end
 menu = Menu.new
 howmanyshots = Howmanyshots.new
 powerMeter = PowerMeter.new
-background = Background.new
+background = Background.new("blue")
 
 onetime = true
 frames = rand(10..100)
-a = 5
-adds = 1
+$index = 5
 update do
   clear
 
@@ -698,7 +740,7 @@ update do
           $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
         end
       else
-        if $howmanyshots < $highscoreLevel3.to_i
+        if $howmanyshots > $highscoreLevel3.to_i
           $highscoreLevel3 = $howmanyshots.to_s
           $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
   
@@ -716,7 +758,7 @@ update do
           nyfil.puts $highscore
           nyfil.close
         else
-          $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+          $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
         end
       end
     end
@@ -737,27 +779,31 @@ update do
       if frames > 0
         frames -= 1
       else
-        frames = rand(40..200)
-        $blocks[a] = MovingBlock.new(2000,rand(200..1060),rand(10..200),rand(50..400),[rand(0..1.0),rand(0..1.0),rand(0..1.0),rand(0.5..1.0)])
-        if a == 25
-          adds *= -1
-        elsif a == 4
-          a += 1
-          adds *= -1
+        frames = rand(1..75)
+        $blocks[$index] = MovingBlock.new(2000,rand(0..1080),rand(50..200),rand(50..400),[rand(0..1.0),rand(0..1.0),rand(0..1.0),rand(0.5..1.0)])
+        if $index == 20
+          $index = 4
         end
-        a += adds
+        $index += 1
       end
     end
 
-    i = 0
+    $i = 0
     collision = false
-    while i < $blocks.length
-      $blocks[i].draw
+    while $i < $blocks.length
+      $blocks[$i].draw
 
-      if $blocks[i].collisionDetection($player.golfball) && !collision
-        collision = true
+      if $level == 3
+        if $blocks[$i].collisionDetection($player.golfball)
+          collision = true
+          $onetime = true
+        end
+      else
+        if $blocks[$i].collisionDetection($player.golfball) && !collision
+          collision = true
+        end
       end
-      i += 1
+      $i += 1
     end
 
     if !collision
