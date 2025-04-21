@@ -10,50 +10,235 @@ set width: 1920
 set height: 1080
 set fullscreen: true
 
+#Variabel för vilken position pilen har
 period = Math::PI
 
+#Variabler för slaget och kraftmätaren
 shot = false
 power = 1
 add = 1
 
+#Om det skett en kollision eller inte 
 collision = false
 
+#Hur många slag man gjort/hur många sekunder som passerat på nivå 3
 $howmanyshots = 0
 
+#Bool för portalen
 $portal = false
 
+#Variabler för kollision
+#Vilken typ av kollision och en position som uppdateras när det inte sker en kollision 
+#som man teleporterar tillbaka till när det sker en kollisioin
 $type_of_collision = nil
-$pos = nil
 $oldpos = nil
 
+#Variabler för menyn
 $menu = true
 $level = 0
 $ballingoal = false
 $endText = ""
 
-$onetime = true
+#Variabler för update loopen
+onetime = true
+frames = rand(10..100)
+index = 5
+
+#Bool som behövs för portalen i nivå 2 och om man kan hoppa eller inte i nivå 3
+onetime2 = true
+
+#alfabetet för kryptering
+$crypt = "abcdefghijklmnopqrstuvwxyzåäö"
+
+# Beskrivning: En funktion som tar ett värde och skapar en sträng av värdet med bokstäver. 
+# Alla Bokstävernas position i alfabetet summerat blir värdet * 31. 
+# Strängen skapas slumpmässigt men om man dekrypterar det får man det man stoppade in.
+#
+# Parameter: value - int, värdet som man vill kryptera, större än noll
+# Return: string - string, strängen som är krypterad
+# 
+# Testfall: encryption(2) => "uöjb"
+#           encryption(2) => "jjjjjjb"
+#
+def encryption(value)
+  string = ""
+  value *= 31
+  while value > 29
+    x = rand(1..29)
+    value -= x
+
+    string += $crypt[x-1]
+  end
+
+  string += $crypt[value-1]
+  return string
+end
+
+# Beskrivning: En funktion som tar bokstäverna i en sträng returnar värdet på 
+# summeringen av ordningen på bokstäverna i alfabetet / 31.
+#
+# Parameter: string - string, bokstäverna som man vill dekryptera
+# Return: value - int, dekrypterade värdet
+# 
+# Testfall: decryption("uöjb") => 2
+#           decryption("jjjjjjb") => 2
+#
+def decryption(string)
+  i = 0
+  value = 0
+  while i < string.length
+    y = 0
+    while string[i] != $crypt[y]
+      y += 1
+    end
+    value += y + 1
+    i += 1
+  end
+  value /= 31.0
+  if value.to_i != value
+    raise "Nope"
+  end
+  return value.to_i
+end
+
+#Innan spelet börjar dekrypterar programmet highscoren i textfilen och sparar det för menyn.
 
 $highscoreLevel1 = ""
 $highscoreLevel2 = ""
 $highscoreLevel3 = ""
 
-highscore = File.read("score.text")
+highscore = File.readlines("score.text")
 i = 0
 level = 1
 while i < highscore.length
-  if highscore[i] == "\n"
-    level += 1
-    i += 1
-  end
-
+  row = highscore[i][0..highscore[i].length-2]
   if level == 1
-    $highscoreLevel1 += highscore[i]
+    $highscoreLevel1 = decryption(row)
   elsif level == 2
-    $highscoreLevel2 += highscore[i]
+    $highscoreLevel2 = decryption(row)
   elsif level == 3
-    $highscoreLevel3 += highscore[i]
+    $highscoreLevel3 = decryption(row)
   end
   i += 1
+  level += 1
+end
+
+#Funktion som sker när man har kommit i mål eller det är game over
+#Funktionen ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
+
+def die()
+  #Det finns tre olika levlar och 4 olika utfall: 1. Man får inte highscore och klarar inte av nivån 
+  #2. Man får highscore men klarar inte av nivån 3. Man klarar av nivån men får inte highscore 4. Man gör båda
+  if $level == 1 
+    if $howmanyshots < 20
+      if $howmanyshots < $highscoreLevel1.to_i
+        $highscoreLevel1 = $howmanyshots.to_s
+        $endText = "Yay! you completed level 1, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[0] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      
+      else
+        $endText = "Yay! you completed level 1, it took #{$howmanyshots} shots, press esc to go back to menu"
+      end
+      sound = Sound.new('geometrydash.mp3')
+      sound.play
+      sleep 3
+    else
+      if $howmanyshots < $highscoreLevel1.to_i
+        $highscoreLevel1 = $howmanyshots.to_s
+        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[0] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      else
+        $endText = "Nice try! but to complete the level your score must be under 20, press esc to back to menu"
+        sound = Sound.new('wilhelm.mp3')
+        sound.play
+        sleep 2
+      end
+    end
+  elsif $level == 2
+    if $howmanyshots < 20
+      if $howmanyshots < $highscoreLevel2.to_i
+        $highscoreLevel2 = $howmanyshots.to_s
+        $endText = "Yay! you completed level 2, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[1] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      else
+        $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
+      end
+      sound = Sound.new('geometrydash.mp3')
+      sound.play
+      sleep 3
+    else
+      if $howmanyshots < $highscoreLevel2.to_i
+        $highscoreLevel2 = $howmanyshots.to_s
+        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[1] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      else
+        $endText = "Nice try! but to complete the level your score must be under 20, press esc to go back to menu"
+        sound = Sound.new('wilhelm.mp3')
+        sound.play
+        sleep 2
+      end
+    end
+  else
+    if $howmanyshots > 30
+      if $howmanyshots > $highscoreLevel3.to_i
+        $highscoreLevel3 = $howmanyshots.to_s
+        $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[2] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      else
+        $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
+      end
+      sound = Sound.new('geometrydash.mp3')
+      sound.play
+      sleep 3
+    else
+      if $howmanyshots > $highscoreLevel3.to_i
+        $highscoreLevel3 = $howmanyshots.to_s
+        $endText = "Nice try! to complete the level your score must be over 30, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      
+        $highscore = File.readlines("score.text")
+        $highscore[2] = encryption($howmanyshots) + "\n"
+      
+        nyfil = File.open("score.text","w")
+        nyfil.puts $highscore
+        nyfil.close
+      else
+        $endText = "Nice try! but to complete the level your score must be above 30, press esc to go back to menu"
+        sound = Sound.new('wilhelm.mp3')
+        sound.play
+        sleep 2
+      end
+    end
+  end
 end
 
 #classes
@@ -108,16 +293,15 @@ class Player
   end
 
   def move(bool,strength,powermeterx,powermetery,collision,powermeterwidth,powermeterheight)
-    if $portal && $onetime
-      $onetime = false
+    if $portal
       @x = 1550
       @y = Window.height-50
       $oldpos = [1550,Window.height-50]
     end
 
     if collision
-      @y = $pos[1]
-      @x = $pos[0]
+      @x = $oldpos[0]
+      @y = $oldpos[1]
 
       if @onetime
         @onetime = false
@@ -130,7 +314,9 @@ class Player
           @grav *= -1
         end
       end
-
+      
+      #Ändrar xspeed mindre än yspeed eftersom det är en boll och då måste man sätta collision först
+      #För annars kommer den justera hastigheterna olika mycket och så får man fel riktning på slaget.
       @xspeed *= 0.85
       @yspeed *= 0.5
       @grav *= 0.5
@@ -173,7 +359,7 @@ class Player
   end
 end
 
-#All block classes
+#All block klasser
 
 class Block
   def initialize(x,y,width,height,color)
@@ -205,17 +391,11 @@ class Block
       if golfball.y1 >= blocky1 && golfball.y3 <= blocky2
         if golfball.x1 <= blockx2
           #Golfbollen åker vänster i ett block
-        
           $type_of_collision = "left"
-          $pos = $oldpos
-        
           return true
         else
           #Golfbollen åker höger i ett block
-        
           $type_of_collision = "right"
-          $pos = $oldpos
-        
           return true
         end
       elsif golfball.x1 <= blockx2 && golfball.x2 >= blockx2 && golfball.y2 >= blocky1 && golfball.y1 <= blocky2
@@ -224,34 +404,22 @@ class Block
           nbr2 = golfball.y3 - blocky1
           if nbr2 > nbr1
             #Golfbollen åker vänster i ett block
-        
             $type_of_collision = "left"
-            $pos = $oldpos
-         
             return true
           else
             #Golfbollen faller ner i ett block
-        
             $type_of_collision = "down"
-            $pos = $oldpos
-         
             return true
           end
         else
           nbr2 = blocky2 - golfball.y1
           if nbr2 > nbr1
             #Golfbollen åker vänster i ett block
-        
             $type_of_collision = "left"
-            $pos = $oldpos
-        
             return true
           else
             #Golfbollen åker upp i ett block
-        
             $type_of_collision = "up"
-            $pos = $oldpos
-        
             return true
           end
         end
@@ -261,50 +429,32 @@ class Block
           nbr2 = golfball.y3 - blocky1
           if nbr2 > nbr1
             #Golfbollen åker höger i ett block
-        
             $type_of_collision = "right"
-            $pos = $oldpos
-         
             return true
           else
             #Golfbollen faller ner i ett block
-        
             $type_of_collision = "down"
-            $pos = $oldpos
-         
             return true
           end
         else
           nbr2 = blocky2 - golfball.y1
           if nbr2 > nbr1
             #Golfbollen åker höger i ett block
-        
             $type_of_collision = "right"
-            $pos = $oldpos
-        
             return true
           else
             #Golfbollen åker upp i ett block
-        
             $type_of_collision = "up"
-            $pos = $oldpos
-        
             return true
           end
         end
       elsif golfball.y3 >= blocky1 && golfball.y1 <= blocky2
         #Golfbollen faller på ett block
-        
         $type_of_collision = "down"
-        $pos = $oldpos
-        
         return true
       elsif golfball.y1 <= blocky2 && golfball.y3 >= blocky1
         #Golfbollen åker upp i ett block
-       
         $type_of_collision = "up"
-        $pos = $oldpos
-
         return true
       end
     end
@@ -438,7 +588,7 @@ class MovingBlock
   end
 end
 
-#Menu and UI classes
+#Meny och UI klasser
 
 class Menu
   def initialize()
@@ -519,6 +669,8 @@ end
 
 class Howmanyshots
   def draw()
+    #På nivå 3 räknar den ut sekundrarna efter man startat nivån
+    #Om man kör under midnatt kommer man få negativa poäng. Man kan iallafall inte fuska.
     if $level == 3
       $howmanyshots = Time.now.strftime("%H%M%S")
       hour = $howmanyshots[0..1].to_i - $beginTime[0..1].to_i 
@@ -589,7 +741,7 @@ on :key_held do |event|
   when 'space'
   #Ändra styrkan innan varje slag, i level 3 kan man ändra styrkan efter att ha nuddat marken, i de andra nivåerna måste man stå stilla
     if $level == 3
-      if $onetime
+      if onetime2
         if power == 40
           add *= -1
         elsif power == 0
@@ -615,7 +767,9 @@ on :mouse_down do |event|
     if $menu && $level1.contains?(event.x,event.y)
       $menu = false
       $level = 1
-
+      $xspeed = 0
+      $yspeed = 0
+      
       $player = nil
       $player = Player.new(120,100) #Här lägger jag till alla objekt för en nivå, för blocken kan man ändra position, storlek och färg.
       #Måste ha globalt räckvidd på player och blocks variablerna eftersom jag inte kan skapa de i updaten eftersom de kommer att förstöras varje frame.
@@ -644,6 +798,8 @@ on :mouse_down do |event|
     elsif $menu && $level2.contains?(event.x,event.y)
       $menu = false
       $level = 2
+      $xspeed = 0
+      $yspeed = 0
 
       $player = nil
       $player = Player.new(Window.width/2, Window.height-70)
@@ -671,8 +827,10 @@ on :mouse_down do |event|
       $beginTime = Time.now.strftime("%H%M%S")
       $menu = false
       $level = 3
-      $index = 5
-      $onetime = false
+      index = 5
+      onetime2 = false
+      $xspeed = 0
+      $yspeed = 0
 
       $player = nil
       $player = Player.new(100,1000)
@@ -693,8 +851,8 @@ on :key_up do |event|
   #Om man släpper tangentbordet blir en boolean true som säger att ett slag ska ske, skillnad mellan nivå 3 och andra nivåer
   when 'space'
     if $level == 3
-      if $onetime
-        $onetime = false
+      if onetime2
+        onetime2 = false
         shot = true
       end
     elsif $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
@@ -719,9 +877,6 @@ howmanyshots = Howmanyshots.new
 powerMeter = PowerMeter.new
 background = Background.new("blue")
 
-onetime = true
-frames = rand(10..100)
-$index = 5
 update do
   clear
 
@@ -731,109 +886,14 @@ update do
   if $ballingoal
     if onetime
       onetime = false
-      if $level == 1 
-        if $howmanyshots < 20
-          if $howmanyshots < $highscoreLevel1.to_i
-            $highscoreLevel1 = $howmanyshots.to_s
-            $endText = "Yay! you completed level 1, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-          
-            $highscore = File.readlines("score.text")
-            $highscore[0] = ""
-            i = 0 
-            while i < $howmanyshots.to_s.length
-              $highscore[0][i] = $howmanyshots.to_s[i]
-              i += 1
-            end
-          
-            $highscore[$highscore.length] = "\n"
-          
-            nyfil = File.open("score.text","w")
-            nyfil.puts $highscore
-            nyfil.close
-          
-          else
-            $endText = "Yay! you completed level 1, it took #{$howmanyshots} shots, press esc to go back to menu"
-          end
-          sound = Sound.new('geometrydash.mp3')
-          sound.play
-          sleep 3
-        else
-          $endText = "Nice try! but to complete the level your score must be under 20, press esc to back to menu"
-          sound = Sound.new('wilhelm.mp3')
-          sound.play
-          sleep 2
-        end
-      elsif $level == 2
-        if $howmanyshots < 20
-          if $howmanyshots < $highscoreLevel2.to_i
-            $highscoreLevel2 = $howmanyshots.to_s
-            $endText = "Yay! you completed level 2, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-          
-            $highscore = File.readlines("score.text")
-            $highscore[1] = ""
-            i = 0 
-            while i < $howmanyshots.to_s.length
-              $highscore[1][i] = $howmanyshots.to_s[i]
-              i += 1
-            end
-          
-            $highscore[$highscore.length] = "\n"
-          
-            nyfil = File.open("score.text","w")
-            nyfil.puts $highscore
-            nyfil.close
-          
-          else
-            $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
-          end
-          sound = Sound.new('geometrydash.mp3')
-          sound.play
-          sleep 3
-        else
-          $endText = "Nice try! but to complete the level your score must be under 20, press esc to go back to menu"
-          sound = Sound.new('wilhelm.mp3')
-          sound.play
-          sleep 2
-        end
-      else
-        if $howmanyshots > 30
-          if $howmanyshots > $highscoreLevel3.to_i
-            $highscoreLevel3 = $howmanyshots.to_s
-            $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-          
-            $highscore = File.readlines("score.text")
-            $highscore[2] = ""
-            i = 0 
-            while i < $howmanyshots.to_s.length
-              $highscore[2][i] = $howmanyshots.to_s[i]
-              i += 1
-            end
-          
-            $highscore[$highscore.length] = "\n"
-          
-            nyfil = File.open("score.text","w")
-            nyfil.puts $highscore
-            nyfil.close
-          else
-            $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
-          end
-          sound = Sound.new('geometrydash.mp3')
-          sound.play
-          sleep 3
-        else
-          $endText = "Nice try! but to complete the level your score must be above 30, press esc to go back to menu"
-          sound = Sound.new('wilhelm.mp3')
-          sound.play
-          sleep 2
-        end
-      end
+      die()
     end
 
     Text.new(
       $endText,
-      x: 150, y: Window.height/2,
+      x: 25, y: Window.height/2,
       style: 'bold',
-      size: 40,
+      size: 33,
       color: 'white',
       z: 10
     )
@@ -842,16 +902,17 @@ update do
     onetime = true
   else
     #Det som sker i nivåerna
+    #Här lägger den till block som rör sig i slumpmässiga intervall
     if $level == 3
       if frames > 0
         frames -= 1
       else
         frames = rand(1..75)
-        $blocks[$index] = MovingBlock.new(2000,rand(0..1080),rand(50..200),rand(50..400),[rand(0..1.0),rand(0..1.0),rand(0..1.0),rand(0.5..1.0)])
-        if $index == 20
-          $index = 4
+        $blocks[index] = MovingBlock.new(2000,rand(0..1080),rand(50..200),rand(50..400),[rand(0..1.0),rand(0..1.0),rand(0..1.0),rand(0.5..1.0)])
+        if index == 20
+          index = 4
         end
-        $index += 1
+        index += 1
       end
     end
 
@@ -864,7 +925,7 @@ update do
       if $level == 3
         if $blocks[i].collisionDetection($player.golfball)
           collision = true
-          $onetime = true
+          onetime2 = true
         end
       else
         if $blocks[i].collisionDetection($player.golfball) && !collision
@@ -883,6 +944,8 @@ update do
     end
 
     #--------------
+
+    #Här ritas det andra upp och rörelse funktionerna körs igenom
 
     $player.move(shot,power,powerMeter.x,powerMeter.y,collision,powerMeter.width,powerMeter.height)
     powerMeter.move($player.x,$player.y,$player.width,$player.height,period)
