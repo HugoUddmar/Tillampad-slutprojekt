@@ -2,8 +2,6 @@
 
 #Svåra problem: Kollision, att veta vilken typ av kollision som sker, och hantera det på rätt sätt
 #Highscore spara i fil: ha flera rader istället för en rad
-#
-
 #initialize
 
 require 'ruby2d'
@@ -12,7 +10,7 @@ set width: 1920
 set height: 1080
 set fullscreen: true
 
-period = 3.1
+period = Math::PI
 
 shot = false
 power = 1
@@ -38,7 +36,6 @@ $onetime = true
 $highscoreLevel1 = ""
 $highscoreLevel2 = ""
 $highscoreLevel3 = ""
-#classes
 
 highscore = File.read("score.text")
 i = 0
@@ -59,82 +56,124 @@ while i < highscore.length
   i += 1
 end
 
-class Background
-  def initialize(color)
-    @color = color
-  end
+#classes
 
-  def draw
-    Rectangle.new(x:0,y:0,width:Window.width,height:Window.height,color:@color,z:0)
-  end
-end
+#Player
 
-class Menu
-  def initialize()
+class Player
+  attr_reader :x
+  attr_reader :y
+  attr_reader :xspeed
+  attr_reader :yspeed
+  attr_reader :grav
+  attr_reader :width
+  attr_reader :height
+  attr_reader :golfball
+  def initialize(startx,starty)
+    @x = startx
+    @y = starty
+    @grav = 0.01
+    @width = 30
+    @height = 30
+    @xmultiplier = 1
+    @ymultiplier = 1
+    @middlepoint = 1
+    @zmulitplier = 1
+    @onetime = true
+    @xspeed = 0
+    @yspeed = 0
+    @rotation = 0
   end
 
   def draw()
-    #level1
-
-    $level1 = Rectangle.new(
-      x:(Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
+    @golfball = Rectangle.new(
+    x: @x, y: @y,
+    width: @width,
+    height: @height,
+    color: [0,0,0,0],
+    z: 2,
     )
 
-    Text.new(
-      "Level1, Highscore:#{$highscoreLevel1}",
-      x:(Window.width/4)-145, y:(Window.height/2)-25,
-      style: 'bold',
-      size: 30,
-      color: 'blue',
-      z: 1
-    )
+    @rotation += @xspeed
 
-    #level2
-
-    $level2 = Rectangle.new(
-      x:(Window.width/2)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
-    )
-
-    Text.new(
-      "Level2, Highscore:#{$highscoreLevel2}",
-      x:(Window.width/2)-145, y:(Window.height/2)-25,
-      style: 'bold',
-      size: 30,
-      color: 'blue',
-      z: 1
-    )
-
-    #level3
-
-    $level3 = Rectangle.new(
-      x:(3*Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
-    )
-
-    Text.new(
-      "Level3, Highscore:#{$highscoreLevel3}",
-      x:(3*Window.width/4)-145, y:(Window.height/2)-25,
-      style: 'bold',
-      size: 30,
-      color: 'blue',
-      z: 1
-    )
-
-    #quit
-
-    $quit = Rectangle.new(
-      x:(Window.width/2)-100, y:(Window.height/2)+100, width:200,height:100,color:'white',z:1
-    )
-
-    Text.new(
-      'Quit game',
-      x:(Window.width/2)-90, y:(Window.height/2)+130,
-      style: 'bold',
-      size: 30,
-      color: 'blue',
-      z: 1
+    Sprite.new(
+      "golfball2.png",
+      width:@width,
+      height:@height,
+      x:@x,
+      y:@y,
+      z:3,
+      rotate: @rotation,
     )
   end
+
+  def move(bool,strength,powermeterx,powermetery,collision,powermeterwidth,powermeterheight)
+    if $portal && $onetime
+      $onetime = false
+      @x = 1550
+      @y = Window.height-50
+      $oldpos = [1550,Window.height-50]
+    end
+
+    if collision
+      @y = $pos[1]
+      @x = $pos[0]
+
+      if @onetime
+        @onetime = false
+
+        if $type_of_collision == "left" || $type_of_collision == "right"
+          @xspeed *= -1
+          @xspeed *= 0.7
+        else
+          @yspeed *= -1
+          @grav *= -1
+        end
+      end
+
+      @xspeed *= 0.85
+      @yspeed *= 0.5
+      @grav *= 0.5
+
+      if @grav > -0.2 && @grav < 0
+        @grav = 0
+      end
+    else
+      @onetime = true
+
+      if @grav < 7
+        @grav += 0.051
+      end
+    end
+
+    if @xspeed < 0.1 && @xspeed > -0.1
+      @xspeed = 0.0
+    end
+
+    if @yspeed < 0.1 && @yspeed > -0.1
+      @yspeed = 0.0
+    end
+
+    @xspeed *= 0.99
+    @yspeed *= 0.99
+
+    @middlepoint = [@x + @width/2, @y + @height/2]
+
+    if bool
+      @xmultiplier = powermeterx + powermeterwidth/2 - @middlepoint[0]
+      @ymultiplier = powermetery + powermeterheight/2 - @middlepoint[1]
+      @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
+
+      @xspeed += strength * @xmultiplier/@zmulitplier
+      @yspeed += strength * @ymultiplier/@zmulitplier
+    end
+
+    @x += @xspeed
+    @y += @yspeed + @grav
+  end
 end
+
+#All block classes
 
 class Block
   def initialize(x,y,width,height,color)
@@ -273,128 +312,6 @@ class Block
   end
 end
 
-class Howmanyshots
-  def draw()
-    if $level == 3
-      $howmanyshots = Time.now.strftime("%H%M%S")
-      hour = $howmanyshots[0..1].to_i - $beginTime[0..1].to_i 
-      hour *= 3600
-
-      minute = $howmanyshots[2..3].to_i - $beginTime[2..3].to_i 
-      minute *= 60
-
-      second = $howmanyshots[4..5].to_i - $beginTime[4..5].to_i 
-
-      $howmanyshots = hour + minute + second
-    end
-    Text.new(
-      "#{$howmanyshots}",
-      x: 0, y: 0,
-      size: 40,
-      color: 'white',
-      z: 2
-    )
-  end
-end
-
-class Player
-  attr_reader :x
-  attr_reader :y
-  attr_reader :xspeed
-  attr_reader :yspeed
-  attr_reader :grav
-  attr_reader :width
-  attr_reader :height
-  attr_reader :golfball
-  def initialize(startx,starty)
-    @x = startx
-    @y = starty
-    @grav = 0.01
-    @width = 20
-    @height = 20
-    @xmultiplier = 1
-    @ymultiplier = 1
-    @middlepoint = 1
-    @zmulitplier = 1
-    @onetime = true
-    @xspeed = 0
-    @yspeed = 0
-  end
-
-  def draw
-    @golfball = Square.new(
-    x: @x, y: @y,
-    size:@width,
-    color: 'teal',
-    z: 2
-    )
-  end
-
-  def move(bool,strength,meterx,metery,collision)
-    if $portal && $onetime
-      $onetime = false
-      @x = 1550
-      @y = Window.height-50
-      $oldpos = [1550,Window.height-50]
-    end
-
-    @middlepoint = [@x + @width/2, @y + @height/2]
-
-    if bool
-      @xmultiplier = meterx + 5 - @middlepoint[0]
-      @ymultiplier = metery + 5 - @middlepoint[1]
-      @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
-
-      @xspeed += strength * (@xmultiplier/@zmulitplier)/2
-      @yspeed += strength * @ymultiplier/@zmulitplier
-    end
-
-    if collision
-      @y = $pos[1]
-      @x = $pos[0]
-
-      if @onetime
-        @onetime = false
-
-        if $type_of_collision == "left" || $type_of_collision == "right"
-          @xspeed *= -1
-        else
-          @yspeed *= -1
-          @grav *= -1
-        end
-      end
-
-      @xspeed *= 0.5
-      @yspeed *= 0.5
-      @grav *= 0.5
-
-      if @grav > -0.2 && @grav < 0
-        @grav = 0
-      end
-    else
-      @onetime = true
-
-      if @grav < 7
-        @grav += 0.051
-      end
-    end
-
-    if @xspeed < 0.1 && @xspeed > -0.1
-      @xspeed = 0.0
-    end
-
-    if @yspeed < 0.1 && @yspeed > -0.1
-      @yspeed = 0.0
-    end
-
-    @xspeed *= 0.99
-    @yspeed *= 0.99
-
-    @x += @xspeed
-    @y += @yspeed + @grav
-  end
-end
-
 class Goal
   def initialize(x,y)
     @x = x
@@ -474,34 +391,6 @@ class Portal
   end
 end
 
-  
-
-
-class PowerMeter
-  attr_accessor :x
-  attr_accessor :y
-  def initialize
-    @x = 100
-    @y = 100
-    @width = 10
-    @height = 10
-  end
-
-  def draw(color)
-    Rectangle.new(
-      x:@x,y:@y,
-      width:@width, height: @height,
-      color: [1-color/40.0, 1-color/40.0, 1-color/40.0, 1],
-      z:3
-    )
-  end
-
-  def move(playerx,playery,playerwidth,playerheight,period)
-    @x = playerx + (playerwidth - @width)/2 + (Math.sin(period) * 30).to_i
-    @y = playery + (playerheight - @height)/2 + (Math.cos(period) * 30).to_i
-  end
-end
-
 class MovingBlock
   attr_reader :x
   def initialize(x,y,width,height,color)
@@ -549,15 +438,156 @@ class MovingBlock
   end
 end
 
+#Menu and UI classes
+
+class Menu
+  def initialize()
+  end
+
+  def draw()
+    #level1
+
+    $level1 = Rectangle.new(
+      x:(Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
+    )
+
+    Text.new(
+      "Level1, Highscore:#{$highscoreLevel1}",
+      x:(Window.width/4)-145, y:(Window.height/2)-25,
+      style: 'bold',
+      size: 30,
+      color: 'blue',
+      z: 1
+    )
+
+    #level2
+
+    $level2 = Rectangle.new(
+      x:(Window.width/2)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
+    )
+
+    Text.new(
+      "Level2, Highscore:#{$highscoreLevel2}",
+      x:(Window.width/2)-145, y:(Window.height/2)-25,
+      style: 'bold',
+      size: 30,
+      color: 'blue',
+      z: 1
+    )
+
+    #level3
+
+    $level3 = Rectangle.new(
+      x:(3*Window.width/4)-150, y:(Window.height/2)-50, width:330,height:100,color:'white',z:1
+    )
+
+    Text.new(
+      "Level3, Highscore:#{$highscoreLevel3}",
+      x:(3*Window.width/4)-145, y:(Window.height/2)-25,
+      style: 'bold',
+      size: 30,
+      color: 'blue',
+      z: 1
+    )
+
+    #quit
+
+    $quit = Rectangle.new(
+      x:(Window.width/2)-100, y:(Window.height/2)+100, width:200,height:100,color:'white',z:1
+    )
+
+    Text.new(
+      'Quit game',
+      x:(Window.width/2)-90, y:(Window.height/2)+130,
+      style: 'bold',
+      size: 30,
+      color: 'blue',
+      z: 1
+    )
+  end
+end
+
+class Background
+  def initialize(color)
+    @color = color
+  end
+
+  def draw
+    Rectangle.new(x:0,y:0,width:Window.width,height:Window.height,color:@color,z:0)
+  end
+end
+
+class Howmanyshots
+  def draw()
+    if $level == 3
+      $howmanyshots = Time.now.strftime("%H%M%S")
+      hour = $howmanyshots[0..1].to_i - $beginTime[0..1].to_i 
+      hour *= 3600
+
+      minute = $howmanyshots[2..3].to_i - $beginTime[2..3].to_i 
+      minute *= 60
+
+      second = $howmanyshots[4..5].to_i - $beginTime[4..5].to_i 
+
+      $howmanyshots = hour + minute + second
+    end
+    Text.new(
+      "#{$howmanyshots}",
+      x: 0, y: 0,
+      size: 40,
+      color: 'white',
+      z: 2
+    )
+  end
+end
+
+class PowerMeter
+  attr_reader :x
+  attr_reader :y
+  attr_reader :width
+  attr_reader :height
+  def initialize
+    @x = 100
+    @y = 100
+    @width = 20
+    @height = 20
+  end
+
+  def draw(color,period,playerx,playery)
+    Sprite.new(
+      "pil.png",
+      width:@width, height: @height,
+      x:@x,y:@y,z:4,
+      rotate:((-period/Math::PI)*180) + 180,
+    )
+
+    Rectangle.new(
+      width:5,
+      height:5+color,
+      x:playerx - 13,
+      y:playery + 25 - color,
+      z:3,
+      color: [color/40.0,1-color/40.0,0,1]
+    )
+  end
+
+  def move(playerx,playery,playerwidth,playerheight,period)
+    @x = playerx + (playerwidth - @width)/2 + (Math.sin(period) * 40).to_i
+    @y = playery + (playerheight - @height)/2 + (Math.cos(period) * 40).to_i
+  end
+end
+
 #listeners
 
 on :key_held do |event|
-  case event.key
-  when 'left'
+  case event.key 
+  #Ändra position på power meter
+  when 'left' 
     period += Math::PI/90
   when 'right'
     period -= Math::PI/90
   when 'space'
+  #Ändra styrkan innan varje slag, i level 3 kan man ändra styrkan efter att ha nuddat marken, i de andra nivåerna måste man stå stilla
     if $level == 3
       if $onetime
         if power == 40
@@ -580,13 +610,15 @@ end
 
 on :mouse_down do |event|
   case event.button
+  #Om man klickar på knapparna i menyerna
   when :left
     if $menu && $level1.contains?(event.x,event.y)
       $menu = false
       $level = 1
 
       $player = nil
-      $player = Player.new(120,100)
+      $player = Player.new(120,100) #Här lägger jag till alla objekt för en nivå, för blocken kan man ändra position, storlek och färg.
+      #Måste ha globalt räckvidd på player och blocks variablerna eftersom jag inte kan skapa de i updaten eftersom de kommer att förstöras varje frame.
       $blocks = []
       $blocks << Block.new(0,0,Window.width,20,"gray")
       $blocks << Block.new(0,0,20,Window.height,"gray")
@@ -658,6 +690,7 @@ end
 
 on :key_up do |event|
   case event.key
+  #Om man släpper tangentbordet blir en boolean true som säger att ett slag ska ske, skillnad mellan nivå 3 och andra nivåer
   when 'space'
     if $level == 3
       if $onetime
@@ -668,6 +701,7 @@ on :key_up do |event|
       shot = true
       $howmanyshots += 1
     end
+  #Här stängs antingen spelet ner om man är i menyn eller går man till menyn genom att meny boolen blir sann och progressen resetas
   when 'escape'
     if $menu 
       close
@@ -679,6 +713,7 @@ on :key_up do |event|
 end
 
 #update
+#Här skapar jag variabler som är instanser av klasser som gäller för hela programmet alltså behöver bara göra det en gång
 menu = Menu.new
 howmanyshots = Howmanyshots.new
 powerMeter = PowerMeter.new
@@ -692,73 +727,104 @@ update do
 
   background.draw()
   
+  #Om man är i mål eller om man måste starta om
   if $ballingoal
     if onetime
       onetime = false
       if $level == 1 
-        if $howmanyshots < $highscoreLevel1.to_i
-          $highscoreLevel1 = $howmanyshots.to_s
-          $endText = "Yay! you completed level 1, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-  
-          $highscore = File.readlines("score.text")
-          $highscore[0] = ""
-          i = 0 
-          while i < $howmanyshots.to_s.length
-            $highscore[0][i] = $howmanyshots.to_s[i]
-            i += 1
+        if $howmanyshots < 20
+          if $howmanyshots < $highscoreLevel1.to_i
+            $highscoreLevel1 = $howmanyshots.to_s
+            $endText = "Yay! you completed level 1, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+          
+            $highscore = File.readlines("score.text")
+            $highscore[0] = ""
+            i = 0 
+            while i < $howmanyshots.to_s.length
+              $highscore[0][i] = $howmanyshots.to_s[i]
+              i += 1
+            end
+          
+            $highscore[$highscore.length] = "\n"
+          
+            nyfil = File.open("score.text","w")
+            nyfil.puts $highscore
+            nyfil.close
+          
+          else
+            $endText = "Yay! you completed level 1, it took #{$howmanyshots} shots, press esc to go back to menu"
           end
-  
-          $highscore[$highscore.length] = "\n"
-  
-          nyfil = File.open("score.text","w")
-          nyfil.puts $highscore
-          nyfil.close
-  
+          sound = Sound.new('geometrydash.mp3')
+          sound.play
+          sleep 3
         else
-          $endText = "Yay! you completed level 1, it took #{$howmanyshots} shots, press esc to go back to menu"
+          $endText = "Nice try! but to complete the level your score must be under 20, press esc to back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
         end
       elsif $level == 2
-        if $howmanyshots < $highscoreLevel2.to_i
-          $highscoreLevel2 = $howmanyshots.to_s
-          $endText = "Yay! you completed level 2, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-  
-          $highscore = File.readlines("score.text")
-          $highscore[1] = ""
-          i = 0 
-          while i < $howmanyshots.to_s.length
-            $highscore[1][i] = $howmanyshots.to_s[i]
-            i += 1
+        if $howmanyshots < 20
+          if $howmanyshots < $highscoreLevel2.to_i
+            $highscoreLevel2 = $howmanyshots.to_s
+            $endText = "Yay! you completed level 2, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+          
+            $highscore = File.readlines("score.text")
+            $highscore[1] = ""
+            i = 0 
+            while i < $howmanyshots.to_s.length
+              $highscore[1][i] = $howmanyshots.to_s[i]
+              i += 1
+            end
+          
+            $highscore[$highscore.length] = "\n"
+          
+            nyfil = File.open("score.text","w")
+            nyfil.puts $highscore
+            nyfil.close
+          
+          else
+            $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
           end
-  
-          $highscore[$highscore.length] = "\n"
-  
-          nyfil = File.open("score.text","w")
-          nyfil.puts $highscore
-          nyfil.close
-  
+          sound = Sound.new('geometrydash.mp3')
+          sound.play
+          sleep 3
         else
-          $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
+          $endText = "Nice try! but to complete the level your score must be under 20, press esc to go back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
         end
       else
-        if $howmanyshots > $highscoreLevel3.to_i
-          $highscoreLevel3 = $howmanyshots.to_s
-          $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
-  
-          $highscore = File.readlines("score.text")
-          $highscore[2] = ""
-          i = 0 
-          while i < $howmanyshots.to_s.length
-            $highscore[2][i] = $howmanyshots.to_s[i]
-            i += 1
+        if $howmanyshots > 30
+          if $howmanyshots > $highscoreLevel3.to_i
+            $highscoreLevel3 = $howmanyshots.to_s
+            $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+          
+            $highscore = File.readlines("score.text")
+            $highscore[2] = ""
+            i = 0 
+            while i < $howmanyshots.to_s.length
+              $highscore[2][i] = $howmanyshots.to_s[i]
+              i += 1
+            end
+          
+            $highscore[$highscore.length] = "\n"
+          
+            nyfil = File.open("score.text","w")
+            nyfil.puts $highscore
+            nyfil.close
+          else
+            $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
           end
-  
-          $highscore[$highscore.length] = "\n"
-  
-          nyfil = File.open("score.text","w")
-          nyfil.puts $highscore
-          nyfil.close
+          sound = Sound.new('geometrydash.mp3')
+          sound.play
+          sleep 3
         else
-          $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
+          $endText = "Nice try! but to complete the level your score must be above 30, press esc to go back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
         end
       end
     end
@@ -775,6 +841,7 @@ update do
     menu.draw
     onetime = true
   else
+    #Det som sker i nivåerna
     if $level == 3
       if frames > 0
         frames -= 1
@@ -788,22 +855,23 @@ update do
       end
     end
 
-    $i = 0
+    #I det under hanteras kollisionen. Den går igenom kollisionen i alla block och ritar upp alla block, uppdaterar oldpos och ser om man står stilla
+    i = 0
     collision = false
-    while $i < $blocks.length
-      $blocks[$i].draw
+    while i < $blocks.length
+      $blocks[i].draw
 
       if $level == 3
-        if $blocks[$i].collisionDetection($player.golfball)
+        if $blocks[i].collisionDetection($player.golfball)
           collision = true
           $onetime = true
         end
       else
-        if $blocks[$i].collisionDetection($player.golfball) && !collision
+        if $blocks[i].collisionDetection($player.golfball) && !collision
           collision = true
         end
       end
-      $i += 1
+      i += 1
     end
 
     if !collision
@@ -814,11 +882,13 @@ update do
       collision = true
     end
 
-    $player.move(shot,power,powerMeter.x,powerMeter.y,collision)
+    #--------------
+
+    $player.move(shot,power,powerMeter.x,powerMeter.y,collision,powerMeter.width,powerMeter.height)
     powerMeter.move($player.x,$player.y,$player.width,$player.height,period)
 
     $player.draw()
-    powerMeter.draw(power)
+    powerMeter.draw(power,period,$player.x,$player.y)
 
     howmanyshots.draw()
 
