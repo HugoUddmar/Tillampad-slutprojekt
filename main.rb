@@ -19,7 +19,7 @@ shot = false
 power = 1
 add = 1
 
-#Om det skett en kollision eller inte 
+#Bool om det skett en kollision eller inte 
 collision = false
 
 #Hur många slag man gjort/hur många sekunder som passerat på nivå 3
@@ -45,203 +45,8 @@ onetime = true
 frames = rand(10..100)
 index = 5
 
-#Bool som behövs för portalen i nivå 2 och om man kan hoppa eller inte i nivå 3
+#Bool om man kan hoppa eller inte i nivå 3
 onetime2 = true
-
-#alfabetet för kryptering
-$crypt = "abcdefghijklmnopqrstuvwxyzåäö"
-
-# Beskrivning: En funktion som tar ett värde och skapar en sträng av värdet med bokstäver. 
-# Alla Bokstävernas position i alfabetet summerat blir värdet * 31. 
-# Strängen skapas slumpmässigt men om man dekrypterar det får man det man stoppade in.
-#
-# Parameter: value - int, värdet som man vill kryptera, större än noll
-# Return: string - string, strängen som är krypterad
-# 
-# Testfall: encryption(2) => "uöjb"
-#           encryption(2) => "jjjjjjb"
-#
-def encryption(value)
-  string = ""
-  value *= 31
-  while value > 29
-    x = rand(1..29)
-    value -= x
-
-    string += $crypt[x-1]
-  end
-
-  string += $crypt[value-1]
-  return string
-end
-
-# Beskrivning: En funktion som tar bokstäverna i en sträng returnar värdet på 
-# summeringen av ordningen på bokstäverna i alfabetet / 31.
-#
-# Parameter: string - string, bokstäverna som man vill dekryptera
-# Return: value - int, dekrypterade värdet
-# 
-# Testfall: decryption("uöjb") => 2
-#           decryption("jjjjjjb") => 2
-#
-def decryption(string)
-  i = 0
-  value = 0
-  while i < string.length
-    y = 0
-    while string[i] != $crypt[y]
-      y += 1
-    end
-    value += y + 1
-    i += 1
-  end
-  value /= 31.0
-  if value.to_i != value
-    raise "Nope"
-  end
-  return value.to_i
-end
-
-#Innan spelet börjar dekrypterar programmet highscoren i textfilen och sparar det för menyn.
-
-$highscoreLevel1 = ""
-$highscoreLevel2 = ""
-$highscoreLevel3 = ""
-
-highscore = File.readlines("score.text")
-i = 0
-level = 1
-while i < highscore.length
-  row = highscore[i][0..highscore[i].length-2]
-  if level == 1
-    $highscoreLevel1 = decryption(row)
-  elsif level == 2
-    $highscoreLevel2 = decryption(row)
-  elsif level == 3
-    $highscoreLevel3 = decryption(row)
-  end
-  i += 1
-  level += 1
-end
-
-
-#Beskrivning: funktionen när det är gameover, ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
-#Parametrar:none
-#Return:none
-def die()
-  #Det finns tre olika levlar och 4 olika utfall: 1. Man får inte highscore och klarar inte av nivån 
-  #2. Man får highscore men klarar inte av nivån 3. Man klarar av nivån men får inte highscore 4. Man gör båda
-  if $level == 1 
-    if $score < 20
-      if $score < $highscoreLevel1.to_i
-        $highscoreLevel1 = $score.to_s
-        $endText = "Yay! you completed level 1, and achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[0] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      
-      else
-        $endText = "Yay! you completed level 1, it took #{$score} shots, press esc to go back to menu"
-      end
-      sound = Sound.new('geometrydash.mp3')
-      sound.play
-      sleep 3
-    else
-      if $score < $highscoreLevel1.to_i
-        $highscoreLevel1 = $score.to_s
-        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[0] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      else
-        $endText = "Nice try! but to complete the level your score must be under 20, press esc to back to menu"
-        sound = Sound.new('wilhelm.mp3')
-        sound.play
-        sleep 2
-      end
-    end
-  elsif $level == 2
-    if $score < 20
-      if $score < $highscoreLevel2.to_i
-        $highscoreLevel2 = $score.to_s
-        $endText = "Yay! you completed level 2, and achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[1] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      else
-        $endText = "Yay! you completed level 2, it took #{$score} shots, press esc to go back to menu"
-      end
-      sound = Sound.new('geometrydash.mp3')
-      sound.play
-      sleep 3
-    else
-      if $score < $highscoreLevel2.to_i
-        $highscoreLevel2 = $score.to_s
-        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[1] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      else
-        $endText = "Nice try! but to complete the level your score must be under 20, press esc to go back to menu"
-        sound = Sound.new('wilhelm.mp3')
-        sound.play
-        sleep 2
-      end
-    end
-  else
-    if $score > 30
-      if $score > $highscoreLevel3.to_i
-        $highscoreLevel3 = $score.to_s
-        $endText = "Yay! you completed level 3, and achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[2] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      else
-        $endText = "Yay! you completed level 3 with a score of #{$score}s, press esc to go back to menu"
-      end
-      sound = Sound.new('geometrydash.mp3')
-      sound.play
-      sleep 3
-    else
-      if $score > $highscoreLevel3.to_i
-        $highscoreLevel3 = $score.to_s
-        $endText = "Nice try! to complete the level your score must be over 30, but you achieved a highscore of #{$score}! press esc to go back to menu"
-      
-        $highscore = File.readlines("score.text")
-        $highscore[2] = encryption($score) + "\n"
-      
-        nyfil = File.open("score.text","w")
-        nyfil.puts $highscore
-        nyfil.close
-      else
-        $endText = "Nice try! but to complete the level your score must be above 30, press esc to go back to menu"
-        sound = Sound.new('wilhelm.mp3')
-        sound.play
-        sleep 2
-      end
-    end
-  end
-end
 
 #Klasser
 
@@ -668,6 +473,201 @@ end
 #Meny och UI klasser
 
 class Menu
+  def initialize()
+    #alfabetet för kryptering
+    @crypt = "abcdefghijklmnopqrstuvwxyzåäö"  
+
+    #Innan spelet börjar dekrypterar programmet highscoren i textfilen och sparar det för menyn.
+
+    @highscoreLevel1 = ""
+    @highscoreLevel2 = ""
+    @highscoreLevel3 = ""
+
+    highscore = File.readlines("score.text")
+    i = 0
+    level = 1
+    while i < highscore.length
+      row = highscore[i][0..highscore[i].length-2]
+      if level == 1
+        @highscoreLevel1 = decryption(row)
+      elsif level == 2
+        @highscoreLevel2 = decryption(row)
+      elsif level == 3
+        @highscoreLevel3 = decryption(row)
+      end
+      i += 1
+      level += 1
+    end
+  end
+
+  # Beskrivning: En funktion som tar ett värde och skapar en sträng av värdet med bokstäver. 
+  # Alla Bokstävernas position i alfabetet summerat blir värdet * 31. 
+  # Strängen skapas slumpmässigt men om man dekrypterar det får man det man stoppade in.
+  #
+  # Parameter: value - int, värdet som man vill kryptera, större än noll
+  # Return: string - string, strängen som är krypterad
+  # 
+  # Testfall: encryption(2) => "uöjb"
+  #           encryption(2) => "jjjjjjb"
+  #
+  def encryption(value)
+    string = ""
+    value *= 31
+    while value > 29
+      x = rand(1..29)
+      value -= x
+
+      string += @crypt[x-1]
+    end
+
+    string += @crypt[value-1]
+    return string
+  end
+
+  # Beskrivning: En funktion som tar bokstäverna i en sträng returnar värdet på 
+  # summeringen av ordningen på bokstäverna i alfabetet / 31.
+  #
+  # Parameter: string - string, bokstäverna som man vill dekryptera
+  # Return: value - int, dekrypterade värdet
+  # 
+  # Testfall: decryption("uöjb") => 2
+  #           decryption("jjjjjjb") => 2
+  #
+  def decryption(string)
+    i = 0
+    value = 0
+    while i < string.length
+      y = 0
+      while string[i] != @crypt[y]
+        y += 1
+      end
+      value += y + 1
+      i += 1
+    end
+    value /= 31.0
+    if value.to_i != value
+      raise "Nope"
+    end
+    return value.to_i
+  end
+
+  #Beskrivning: funktionen när det är gameover, ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
+  #Parametrar:none
+  #Return:none
+  def die()
+    #Det finns tre olika levlar och 4 olika utfall: 1. Man får inte highscore och klarar inte av nivån 
+    #2. Man får highscore men klarar inte av nivån 3. Man klarar av nivån men får inte highscore 4. Man gör båda
+    if $level == 1 
+      if $score < 20
+        if $score < @highscoreLevel1.to_i
+          @highscoreLevel1 = $score.to_s
+          $endText = "Yay! you completed level 1, and achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[0] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        
+        else
+          $endText = "Yay! you completed level 1, it took #{$score} shots, press esc to go back to menu"
+        end
+        sound = Sound.new('geometrydash.mp3')
+        sound.play
+        sleep 3
+      else
+        if $score < @highscoreLevel1.to_i
+          @highscoreLevel1 = $score.to_s
+          $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[0] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        else
+          $endText = "Nice try! but to complete the level your score must be under 20, press esc to back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
+        end
+      end
+    elsif $level == 2
+      if $score < 20
+        if $score < @highscoreLevel2.to_i
+          @highscoreLevel2 = $score.to_s
+          $endText = "Yay! you completed level 2, and achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[1] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        else
+          $endText = "Yay! you completed level 2, it took #{$score} shots, press esc to go back to menu"
+        end
+        sound = Sound.new('geometrydash.mp3')
+        sound.play
+        sleep 3
+      else
+        if $score < @highscoreLevel2.to_i
+          @highscoreLevel2 = $score.to_s
+          $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[1] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        else
+          $endText = "Nice try! but to complete the level your score must be under 20, press esc to go back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
+        end
+      end
+    else
+      if $score > 30
+        if $score > @highscoreLevel3.to_i
+          @highscoreLevel3 = $score.to_s
+          $endText = "Yay! you completed level 3, and achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[2] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        else
+          $endText = "Yay! you completed level 3 with a score of #{$score}, press esc to go back to menu"
+        end
+        sound = Sound.new('geometrydash.mp3')
+        sound.play
+        sleep 3
+      else
+        if $score > @highscoreLevel3.to_i
+          @highscoreLevel3 = $score.to_s
+          $endText = "Nice try! to complete the level your score must be over 30, but you achieved a highscore of #{$score}! press esc to go back to menu"
+        
+          highscore = File.readlines("score.text")
+          highscore[2] = encryption($score) + "\n"
+        
+          nyfil = File.open("score.text","w")
+          nyfil.puts highscore
+          nyfil.close
+        else
+          $endText = "Nice try! but to complete the level your score must be above 30, press esc to go back to menu"
+          sound = Sound.new('wilhelm.mp3')
+          sound.play
+          sleep 2
+        end
+      end
+    end
+  end
 
   #Ritar ut alla knappar och texter för menyn
   def draw()
@@ -678,7 +678,7 @@ class Menu
     )
 
     Text.new(
-      "Level1, Highscore:#{$highscoreLevel1}",
+      "Level1, Highscore:#{@highscoreLevel1}",
       x:(Window.width/4)-145, y:(Window.height/2)-25,
       style: 'bold',
       size: 30,
@@ -693,7 +693,7 @@ class Menu
     )
 
     Text.new(
-      "Level2, Highscore:#{$highscoreLevel2}",
+      "Level2, Highscore:#{@highscoreLevel2}",
       x:(Window.width/2)-145, y:(Window.height/2)-25,
       style: 'bold',
       size: 30,
@@ -708,7 +708,7 @@ class Menu
     )
 
     Text.new(
-      "Level3, Highscore:#{$highscoreLevel3}",
+      "Level3, Highscore:#{@highscoreLevel3}",
       x:(3*Window.width/4)-145, y:(Window.height/2)-25,
       style: 'bold',
       size: 30,
@@ -985,7 +985,7 @@ update do
   if $finish
     if onetime
       onetime = false
-      die()
+      menu.die()
       $player.xspeed = 0
       $player.yspeed = 0
       $player.grav = 0
