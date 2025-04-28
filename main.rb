@@ -1,5 +1,3 @@
-
-
 #Svåra problem: Kollision, att veta vilken typ av kollision som sker, och hantera det på rätt sätt
 #Highscore spara i fil: ha flera rader istället för en rad
 #initialize
@@ -123,9 +121,8 @@ while i < highscore.length
   level += 1
 end
 
-#Funktion som sker när man har kommit i mål eller det är game over
-#Funktionen ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
 
+#Beskrivning: funktionen när det är gameover, ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
 def die()
   #Det finns tre olika levlar och 4 olika utfall: 1. Man får inte highscore och klarar inte av nivån 
   #2. Man får highscore men klarar inte av nivån 3. Man klarar av nivån men får inte highscore 4. Man gör båda
@@ -248,9 +245,9 @@ end
 class Player
   attr_reader :x
   attr_reader :y
-  attr_reader :xspeed
-  attr_reader :yspeed
-  attr_reader :grav
+  attr_accessor :xspeed
+  attr_accessor :yspeed
+  attr_accessor :grav
   attr_reader :width
   attr_reader :height
   attr_reader :golfball
@@ -292,11 +289,18 @@ class Player
     )
   end
 
+  #Beskrivning: Funktionen är för spelarrörelsen. 
+  #
+  #
+  #
+  #
+  #
+  #
   def move(bool,strength,powermeterx,powermetery,collision,powermeterwidth,powermeterheight)
     if $portal
       @x = 1550
-      @y = Window.height-50
-      $oldpos = [1550,Window.height-50]
+      @y = Window.height-30
+      $oldpos = [1550,Window.height-30]
     end
 
     if collision
@@ -308,16 +312,16 @@ class Player
 
         if $type_of_collision == "left" || $type_of_collision == "right"
           @xspeed *= -1
-          @xspeed *= 0.7
+          @xspeed *= 0.5
         else
           @yspeed *= -1
           @grav *= -1
         end
       end
       
-      #Ändrar xspeed mindre än yspeed eftersom det är en boll och då måste man sätta collision först
+      #Ändrar xspeed mindre än yspeed eftersom det är en boll och då måste man sätta collision innan den hanterar ett slag
       #För annars kommer den justera hastigheterna olika mycket och så får man fel riktning på slaget.
-      @xspeed *= 0.85
+      @xspeed *= 0.97
       @yspeed *= 0.5
       @grav *= 0.5
 
@@ -328,11 +332,11 @@ class Player
       @onetime = true
 
       if @grav < 7
-        @grav += 0.051
+        @grav += 0.075
       end
     end
 
-    if @xspeed < 0.1 && @xspeed > -0.1
+    if @xspeed < 0.15 && @xspeed > -0.15
       @xspeed = 0.0
     end
 
@@ -385,77 +389,114 @@ class Block
     blockx2 = @x + @width
     blocky1 = @y
     blocky2 = @y + @height
-  
+    
+    #Först kollar den om spelaren är inuti blocket på x-koordinaten.
+    #Sen innan den kollar up och ner kollision kollar den om man är i en sidokollision fast hela spelaren är i sidan av ett block.
+    #Sen kollar den på hörnkollisionerna vilket jag tyckte var svårast och lägger till mycket mer if-satser datorn måste gå igenom.
+    #Sist kollar den upp och ner kollision
     
     if golfball.x2 > blockx1 && golfball.x1 < blockx2
       if golfball.y1 >= blocky1 && golfball.y3 <= blocky2
-        if golfball.x1 <= blockx2
+        if golfball.x1 <= blockx1
           #Golfbollen åker vänster i ett block
-          $type_of_collision = "left"
+          $type_of_collision = "right"
           return true
         else
           #Golfbollen åker höger i ett block
-          $type_of_collision = "right"
+          $type_of_collision = "left"
           return true
         end
-      elsif golfball.x1 <= blockx2 && golfball.x2 >= blockx2 && golfball.y2 >= blocky1 && golfball.y1 <= blocky2
-        nbr1 = blockx2 - golfball.x1
-        if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
-          nbr2 = golfball.y3 - blocky1
-          if nbr2 > nbr1
-            #Golfbollen åker vänster i ett block
+      elsif golfball.y3 >= blocky1 && golfball.y3 <= blocky2
+        if golfball.x2 > blockx2
+          #Upp åt höger
+          if $oldpos[0] <= blockx2
+            $type_of_collision = "down"
+            return true
+          elsif $oldpos[1] + golfball.height >= blocky1
+            $type_of_collision = "left"
+            return true
+          end
+          
+          tidx = (-1 * ($oldpos[0] - blockx2)) / $player.xspeed
+          tidy = (blocky1 - $oldpos[1]) / ($player.yspeed + $player.grav)
+
+          if tidx < tidy
             $type_of_collision = "left"
             return true
           else
-            #Golfbollen faller ner i ett block
+            $type_of_collision = "down"
+            return true
+          end
+        elsif golfball.x1 < blockx1
+          #Upp åt vänster
+
+          if $oldpos[0] + golfball.width >= blockx1
+            $type_of_collision = "down"
+            return true
+          elsif $oldpos[1] + golfball.height >= blocky1
+            $type_of_collision = "right"
+            return true
+          end
+         
+          tidx = (blockx1-$oldpos[0]) / $player.xspeed
+          tidy = (blocky1-$oldpos[1]) / ($player.yspeed + $player.grav)
+
+          if tidx < tidy
+            $type_of_collision = "right"
+            return true
+          else
             $type_of_collision = "down"
             return true
           end
         else
-          nbr2 = blocky2 - golfball.y1
-          if nbr2 > nbr1
-            #Golfbollen åker vänster i ett block
+          #Golfbollen faller på ett block 
+          $type_of_collision = "down"
+          return true
+        end
+      elsif golfball.y1 <= blocky2 && golfball.y3 >= blocky2
+        if golfball.x2 > blockx2
+          #Ner åt höger
+          if $oldpos[0] <= blockx2
+            $type_of_collision = "up"
+            return true
+          elsif $oldpos[1] <= blocky2
+            $type_of_collision = "left"
+            return true
+          end
+
+          tidx = (blockx2 - $oldpos[0]) / $player.xspeed
+          tidy = (blocky2 - $oldpos[1]) / ($player.yspeed + $player.grav)
+          if tidx < tidy
             $type_of_collision = "left"
             return true
           else
-            #Golfbollen åker upp i ett block
             $type_of_collision = "up"
             return true
           end
-        end
-      elsif golfball.x2 >= blockx1 && golfball.x1 <= blockx1 && golfball.y2 >= blocky1 && golfball.y1 <= blocky2
-        nbr1 = golfball.x2 - blockx1
-        if golfball.y3 >= blocky1 && golfball.y1 <= blocky1
-          nbr2 = golfball.y3 - blocky1
-          if nbr2 > nbr1
-            #Golfbollen åker höger i ett block
+        elsif golfball.x1 < blockx1
+          #Ner åt vänster
+          if $oldpos[0] + golfball.width >= blockx1
+            $type_of_collision = "up"
+            return true
+          elsif $oldpos[1] <= blocky2
+            $type_of_collision = "right"
+            return true
+          end
+
+          tidx = (blockx1 - $oldpos[0]) / $player.xspeed
+          tidy = (blocky2 - $oldpos[1]) / ($player.yspeed + $player.grav)
+          if tidx < tidy
             $type_of_collision = "right"
             return true
           else
-            #Golfbollen faller ner i ett block
-            $type_of_collision = "down"
+            $type_of_collision = "up"
             return true
           end
         else
-          nbr2 = blocky2 - golfball.y1
-          if nbr2 > nbr1
-            #Golfbollen åker höger i ett block
-            $type_of_collision = "right"
-            return true
-          else
-            #Golfbollen åker upp i ett block
-            $type_of_collision = "up"
-            return true
-          end
+          #Golfbollen åker upp i ett block
+          $type_of_collision = "up"
+          return true
         end
-      elsif golfball.y3 >= blocky1 && golfball.y1 <= blocky2
-        #Golfbollen faller på ett block
-        $type_of_collision = "down"
-        return true
-      elsif golfball.y1 <= blocky2 && golfball.y3 >= blocky1
-        #Golfbollen åker upp i ett block
-        $type_of_collision = "up"
-        return true
       end
     end
     return false
@@ -514,7 +555,7 @@ class Portal
     )
 
     Rectangle.new(
-      x: 1550,y:Window.height-50, width:30, height:30, color:'purple', z:2
+      x: 1550,y:Window.height-30, width:30, height:30, color:'purple', z:2
     )
   end
 
@@ -705,6 +746,17 @@ class PowerMeter
     @height = 20
   end
 
+  #Beskrivning: Funktionen ritar pilen och kraftmätaren
+  #Rotationen på pilen utgår från period som är radian. 
+  #Jag behöver bara överföra det till grader och sen justera det till startvärdet och sen ta det åt andra hållet med minus
+  #På kraftmätaren blir röda värdet på färgen mer och mer och gröna mindre och mindre och den är grön i början
+  #Längden justeras med color och för att den ska växa uppåt ändras y positionen
+  #
+  #Parametrar:
+  #color - int styrkan av slaget just nu
+  #period - float en radian som beskriver vilken rotation pilen ska ha
+  #playerx - int spelarens x-värde 
+  #playery - int spelarens y-koordinate. Kraftmätarens position beror på spelaren
   def draw(color,period,playerx,playery)
     Sprite.new(
       "pil.png",
@@ -723,6 +775,13 @@ class PowerMeter
     )
   end
 
+  #Beskrivning: Funktionen räknar ut positionen på pilen
+
+  #Parametrar: playerx int spelarens x-värde
+  #playery int spelarens y-värde
+  #playerwidth - int spelarens bredd
+  #playerheight - int spelarens höjd
+  #period - float float en radian som beskriver var i en cirkel runt spelaren man är i
   def move(playerx,playery,playerwidth,playerheight,period)
     @x = playerx + (playerwidth - @width)/2 + (Math.sin(period) * 40).to_i
     @y = playery + (playerheight - @height)/2 + (Math.cos(period) * 40).to_i
@@ -767,59 +826,55 @@ on :mouse_down do |event|
     if $menu && $level1.contains?(event.x,event.y)
       $menu = false
       $level = 1
-      $xspeed = 0
-      $yspeed = 0
       
       $player = nil
       $player = Player.new(120,100) #Här lägger jag till alla objekt för en nivå, för blocken kan man ändra position, storlek och färg.
       #Måste ha globalt räckvidd på player och blocks variablerna eftersom jag inte kan skapa de i updaten eftersom de kommer att förstöras varje frame.
       $blocks = []
-      $blocks << Block.new(0,0,Window.width,20,"gray")
-      $blocks << Block.new(0,0,20,Window.height,"gray")
-      $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
-      $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
+      $blocks << Block.new(0,-20,Window.width,20,[0,0,0,0])
+      $blocks << Block.new(-20,0,20,Window.height,[0,0,0,0])
+      $blocks << Block.new(0,Window.height,Window.width,20,[0,0,0,0])
+      $blocks << Block.new(Window.width,0,20,Window.height,[0,0,0,0])
 
-      $blocks << Block.new(20,350,Window.width-350,100,"white")
+      $blocks << Block.new(0,350,Window.width-320,100,"white")
       $blocks << Block.new(220,200,350,150,"white")
       $blocks << Block.new(570,250,350,100,"white")
       $blocks << Block.new(920,300,350,50,"white")
-      $blocks << Block.new(Window.width-330,150, 50, 450,"white")
+      $blocks << Block.new(Window.width-330,150, 30, 450,"white")
       $blocks << Block.new(Window.width-330,600,150,50,"white")
-      $blocks << Block.new(Window.width-230,150, 50, 450,"white")
+      $blocks << Block.new(Window.width-210,150, 30, 450,"white")
 
       $blocks << Block.new(1350,750, 200, 400,"brown")
-      $blocks << Block.new(1150,520, 200, 300,"brown")
-      $blocks << Block.new(700,400, 70, 580,"green")
-      $blocks << Block.new(770,930, 400, 50,"green")
-      $blocks << Block.new(20,800, 80, 50,"green")
-      $blocks << Block.new(170,600, 90, 70,"green")
+      $blocks << Block.new(1150,520, 200, 300,"green")
+      $blocks << Block.new(700,400, 70, 580,"blue")
+      $blocks << Block.new(770,930, 400, 50,"blue")
+      $blocks << Block.new(0,800, 100, 50,"white")
+      $blocks << Block.new(170,600, 90, 70,"white")
 
       $blocks << Goal.new(200,600)
     elsif $menu && $level2.contains?(event.x,event.y)
       $menu = false
       $level = 2
-      $xspeed = 0
-      $yspeed = 0
 
       $player = nil
       $player = Player.new(Window.width/2, Window.height-70)
       $blocks = []
-      $blocks << Block.new(0,0,Window.width,20,"gray")
-      $blocks << Block.new(0,0,20,Window.height,"gray")
-      $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
-      $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
+      $blocks << Block.new(0,-20,Window.width,20,[0,0,0,0])
+      $blocks << Block.new(-20,0,20,Window.height,[0,0,0,0])
+      $blocks << Block.new(0,Window.height,Window.width,20,[0,0,0,0])
+      $blocks << Block.new(Window.width,0,20,Window.height,[0,0,0,0])
 
-      $blocks << Block.new(Window.width*0.4,150,40, Window.height-170,"black")
-      $blocks << Block.new(Window.width*0.6,20,40, Window.height-40,"black")
-      $blocks << Block.new(Window.width*0.4 + 40,750,170, 50,"black")
-      $blocks << Block.new(Window.width*0.4 + 200,500,185, 50,"black")
-      $blocks << Block.new(Window.width*0.4 + 40,250,170, 50,"black")
+      $blocks << Block.new(Window.width*0.4,150,40, Window.height-150,"fuchsia")
+      $blocks << Block.new(Window.width*0.6,0,40, Window.height,"fuchsia")
+      $blocks << Block.new(Window.width*0.4 + 40,750,170, 50,"fuchsia")
+      $blocks << Block.new(Window.width*0.4 + 200,500,185, 50,"fuchsia")
+      $blocks << Block.new(Window.width*0.4 + 40,250,170, 50,"fuchsia")
 
-      $blocks << Block.new(100,240,615, 50,"yellow")
-      $blocks << Block.new(700, 500,70, 70,"red")
-      $blocks << Block.new(20, 500,200, 70,"navy")
-      $blocks << Block.new(1400,600, 350,50,"red")
-      $blocks << Block.new(1600,130, 100,50,"navy")
+      $blocks << Block.new(100,240,615, 50,"white")
+      $blocks << Block.new(700, 500,70, 70,"white")
+      $blocks << Block.new(0, 500,220, 70,"white")
+      $blocks << Block.new(1400,600, 350,50,"white")
+      $blocks << Block.new(1600,130, 100,50,"white")
 
       $blocks << Portal.new(100, 470,)
       $blocks << Goal.new(Window.width-300,130)
@@ -829,8 +884,6 @@ on :mouse_down do |event|
       $level = 3
       index = 5
       onetime2 = false
-      $xspeed = 0
-      $yspeed = 0
 
       $player = nil
       $player = Player.new(100,1000)
@@ -875,11 +928,12 @@ end
 menu = Menu.new
 howmanyshots = Howmanyshots.new
 powerMeter = PowerMeter.new
-background = Background.new("blue")
+background = Background.new("#87cefa")
 
 update do
   clear
 
+  #Rita bakgrunden
   background.draw()
   
   #Om man är i mål eller om man måste starta om
@@ -887,6 +941,9 @@ update do
     if onetime
       onetime = false
       die()
+      $player.xspeed = 0
+      $player.yspeed = 0
+      $player.grav = 0
     end
 
     Text.new(
