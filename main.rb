@@ -1,6 +1,9 @@
-#Svåra problem: Kollision, att veta vilken typ av kollision som sker, och hantera det på rätt sätt
-#Highscore spara i fil: ha flera rader istället för en rad
-#initialize
+# Fil: main.rb
+# Författare: Hugo Uddmar
+# Datum 2025-04-28
+# Beskrivning: Ett minigolfspel 
+
+#initiera
 
 require 'ruby2d'
 
@@ -20,21 +23,21 @@ add = 1
 collision = false
 
 #Hur många slag man gjort/hur många sekunder som passerat på nivå 3
-$howmanyshots = 0
+$score = 0
 
 #Bool för portalen
 $portal = false
 
 #Variabler för kollision
 #Vilken typ av kollision och en position som uppdateras när det inte sker en kollision 
-#som man teleporterar tillbaka till när det sker en kollisioin
+#som man teleporterar tillbaka till när det sker en kollision och som används i kollision funktionen
 $type_of_collision = nil
 $oldpos = nil
 
 #Variabler för menyn
 $menu = true
 $level = 0
-$ballingoal = false
+$finish = false
 $endText = ""
 
 #Variabler för update loopen
@@ -123,35 +126,37 @@ end
 
 
 #Beskrivning: funktionen när det är gameover, ändrar sluttexten, ändrar highscoren i textfilen och i programmet om man gjort det och spelar upp ljud.
+#Parametrar:none
+#Return:none
 def die()
   #Det finns tre olika levlar och 4 olika utfall: 1. Man får inte highscore och klarar inte av nivån 
   #2. Man får highscore men klarar inte av nivån 3. Man klarar av nivån men får inte highscore 4. Man gör båda
   if $level == 1 
-    if $howmanyshots < 20
-      if $howmanyshots < $highscoreLevel1.to_i
-        $highscoreLevel1 = $howmanyshots.to_s
-        $endText = "Yay! you completed level 1, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+    if $score < 20
+      if $score < $highscoreLevel1.to_i
+        $highscoreLevel1 = $score.to_s
+        $endText = "Yay! you completed level 1, and achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[0] = encryption($howmanyshots) + "\n"
+        $highscore[0] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
         nyfil.close
       
       else
-        $endText = "Yay! you completed level 1, it took #{$howmanyshots} shots, press esc to go back to menu"
+        $endText = "Yay! you completed level 1, it took #{$score} shots, press esc to go back to menu"
       end
       sound = Sound.new('geometrydash.mp3')
       sound.play
       sleep 3
     else
-      if $howmanyshots < $highscoreLevel1.to_i
-        $highscoreLevel1 = $howmanyshots.to_s
-        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      if $score < $highscoreLevel1.to_i
+        $highscoreLevel1 = $score.to_s
+        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[0] = encryption($howmanyshots) + "\n"
+        $highscore[0] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
@@ -164,30 +169,30 @@ def die()
       end
     end
   elsif $level == 2
-    if $howmanyshots < 20
-      if $howmanyshots < $highscoreLevel2.to_i
-        $highscoreLevel2 = $howmanyshots.to_s
-        $endText = "Yay! you completed level 2, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+    if $score < 20
+      if $score < $highscoreLevel2.to_i
+        $highscoreLevel2 = $score.to_s
+        $endText = "Yay! you completed level 2, and achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[1] = encryption($howmanyshots) + "\n"
+        $highscore[1] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
         nyfil.close
       else
-        $endText = "Yay! you completed level 2, it took #{$howmanyshots} shots, press esc to go back to menu"
+        $endText = "Yay! you completed level 2, it took #{$score} shots, press esc to go back to menu"
       end
       sound = Sound.new('geometrydash.mp3')
       sound.play
       sleep 3
     else
-      if $howmanyshots < $highscoreLevel2.to_i
-        $highscoreLevel2 = $howmanyshots.to_s
-        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      if $score < $highscoreLevel2.to_i
+        $highscoreLevel2 = $score.to_s
+        $endText = "Nice try! to complete the level your score must be under 20, but you achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[1] = encryption($howmanyshots) + "\n"
+        $highscore[1] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
@@ -200,30 +205,30 @@ def die()
       end
     end
   else
-    if $howmanyshots > 30
-      if $howmanyshots > $highscoreLevel3.to_i
-        $highscoreLevel3 = $howmanyshots.to_s
-        $endText = "Yay! you completed level 3, and achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+    if $score > 30
+      if $score > $highscoreLevel3.to_i
+        $highscoreLevel3 = $score.to_s
+        $endText = "Yay! you completed level 3, and achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[2] = encryption($howmanyshots) + "\n"
+        $highscore[2] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
         nyfil.close
       else
-        $endText = "Yay! you completed level 3 with a score of #{$howmanyshots}s, press esc to go back to menu"
+        $endText = "Yay! you completed level 3 with a score of #{$score}s, press esc to go back to menu"
       end
       sound = Sound.new('geometrydash.mp3')
       sound.play
       sleep 3
     else
-      if $howmanyshots > $highscoreLevel3.to_i
-        $highscoreLevel3 = $howmanyshots.to_s
-        $endText = "Nice try! to complete the level your score must be over 30, but you achieved a highscore of #{$howmanyshots}! press esc to go back to menu"
+      if $score > $highscoreLevel3.to_i
+        $highscoreLevel3 = $score.to_s
+        $endText = "Nice try! to complete the level your score must be over 30, but you achieved a highscore of #{$score}! press esc to go back to menu"
       
         $highscore = File.readlines("score.text")
-        $highscore[2] = encryption($howmanyshots) + "\n"
+        $highscore[2] = encryption($score) + "\n"
       
         nyfil = File.open("score.text","w")
         nyfil.puts $highscore
@@ -238,7 +243,7 @@ def die()
   end
 end
 
-#classes
+#Klasser
 
 #Player
 
@@ -268,7 +273,7 @@ class Player
   end
 
   def draw()
-    @golfball = Rectangle.new(
+    @golfball = Rectangle.new( #Det som används för kollisionen
     x: @x, y: @y,
     width: @width,
     height: @height,
@@ -276,9 +281,9 @@ class Player
     z: 2,
     )
 
-    @rotation += @xspeed
+    @rotation += @xspeed  #Rotationen är inte realistisk men det här funkar väl
 
-    Sprite.new(
+    Sprite.new( #Det som man ser av spelaren
       "golfball2.png",
       width:@width,
       height:@height,
@@ -289,28 +294,32 @@ class Player
     )
   end
 
-  #Beskrivning: Funktionen är för spelarrörelsen. 
+  #Beskrivning: Spelarrörelsen. Hantering av kollision, slag, gravitation, hastighet, position
   #
-  #
-  #
-  #
-  #
-  #
+  #Parametrar:
+  #bool - bool, om ett slag skett
+  #strength - int, styrkan på slaget
+  #powermeterx - int, pilens x-koordinat
+  #powermetery - int, pilens y-koordinat
+  #powermeterwidth - int, bredden på pilen
+  #powermeterheight - int, höjden på pilen. Alla pil parametrar används för uträkningen vid slag
+  #collision - bool, om en kollision skett
+  #return: inget
   def move(bool,strength,powermeterx,powermetery,collision,powermeterwidth,powermeterheight)
-    if $portal
+    if $portal #Teleportera i nivå 2
       @x = 1550
       @y = Window.height-30
       $oldpos = [1550,Window.height-30]
     end
 
-    if collision
-      @x = $oldpos[0]
-      @y = $oldpos[1]
+    if collision 
+      @x = $oldpos[0]   #Först teleportera tillbaka där kollision inte hände
+      @y = $oldpos[1]   
 
-      if @onetime
+      if @onetime #En gång vid kollision multipliceras hastigheterna med -1 beroende på vilken typ av kollision
         @onetime = false
 
-        if $type_of_collision == "left" || $type_of_collision == "right"
+        if $type_of_collision == "leftright"
           @xspeed *= -1
           @xspeed *= 0.5
         else
@@ -325,45 +334,50 @@ class Player
       @yspeed *= 0.5
       @grav *= 0.5
 
-      if @grav > -0.2 && @grav < 0
+      if @grav > -0.2 && @grav < 0     #så att det inte blir oändligt många decimaler
         @grav = 0
       end
     else
       @onetime = true
 
-      if @grav < 7
+      if @grav < 7          #När det är kollision stängs gravitationen av, annars funkar det som vanligt
         @grav += 0.075
       end
+
+      @xspeed *= 0.99
+      @yspeed *= 0.99  #I luften minskar hastigheten också lite
     end
 
-    if @xspeed < 0.15 && @xspeed > -0.15
+    if @xspeed < 0.15 && @xspeed > -0.15 #så att det inte blir oändligt många decimaler
       @xspeed = 0.0
     end
 
-    if @yspeed < 0.1 && @yspeed > -0.1
+    if @yspeed < 0.1 && @yspeed > -0.1 #så att det inte blir oändligt många decimaler
       @yspeed = 0.0
     end
 
-    @xspeed *= 0.99
-    @yspeed *= 0.99
-
-    @middlepoint = [@x + @width/2, @y + @height/2]
+    @middlepoint = [@x + @width/2, @y + @height/2] #mittpunkten av spelaren
 
     if bool
+      #Först räknas skillnaden i x och y-led ut mellan mittpunkterna på pilen och spelaren.
+      #Sen räknar man ut hur lång hypotenusan/avståndet mellan pilen och spelaren är och
+      #delar skillnaden i x och y-led med avståndet för att få en lite realistisk kaströrelse
       @xmultiplier = powermeterx + powermeterwidth/2 - @middlepoint[0]
       @ymultiplier = powermetery + powermeterheight/2 - @middlepoint[1]
       @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
 
+      
+      #Det multipliceras med styrkan och adderas till hastigheterna
       @xspeed += strength * @xmultiplier/@zmulitplier
       @yspeed += strength * @ymultiplier/@zmulitplier
     end
 
-    @x += @xspeed
+    @x += @xspeed #Till slut adderas spelarens position med hastigheterna
     @y += @yspeed + @grav
   end
 end
 
-#All block klasser
+#Alla block klasser
 
 class Block
   def initialize(x,y,width,height,color)
@@ -384,36 +398,58 @@ class Block
     return golfball && collission_detected?(golfball) #Måste skriva && golfball för att kolla om den är initierad
   end
 
+  #Kollision för rektanglar. Detektion och vilken typ av kollision.
+  #Jag tänkte göra det för en cirkel och rektangel men jag har spenderat så mycket tid på funktionen och jag är väldigt nöjd med den.
+  #Parametrar: golfball - Rectangle: Position och storlek som båda är i int som används i villkoren i funktionen
+  #Return: inget
   def collission_detected?(golfball)
+    #Först initieras variablerna för koordinaterna på kanterna på rektanglarna.
+    #x1 = vänstra kanten, x2 = högra kanten, y1 = toppkanten, y2/y3 = bottenkanten. 
+    #Anledningen till att det är y2/y3 är för att det utgår från koordinaterna av hörnen x1-4 och y1-4 men man behöver bara 4 koordinater per rektangel
+    #och jag tycker det är tydligare med x1-2 och y1-2 så blocket har y1 och y2 medan golfbollen har y1 och y3
+
+    #Först kollar den om man är tillräckligt nära blocket med en marginal på 40 pixlar så det blir effektivt.
+    #Sen kollar den om spelaren är inuti blocket på x-koordinaten.
+    #Sen innan den kollar up och ner kollision kollar den om man är i en sidokollision fast hela spelaren är i sidan av ett block.
+    #Sen kollar den på hörnkollisionerna. Jag har först delat upp det i varje hörn för sig. Först kollar jag på oldpos där i vissa fall det bara finns en kollision som kan ha skett.
+    #Sen när det finns två olika kollisioner som kan ha skett räknar jag ut en tid genom sträcka / hastighet för x och y-ledet och justerar så det bara blir positivt och tar den tiden som är minst.
+    #Sist kollar den upp och ner kollision
+
     blockx1 = @x
     blockx2 = @x + @width
     blocky1 = @y
     blocky2 = @y + @height
-    
-    #Först kollar den om spelaren är inuti blocket på x-koordinaten.
-    #Sen innan den kollar up och ner kollision kollar den om man är i en sidokollision fast hela spelaren är i sidan av ett block.
-    #Sen kollar den på hörnkollisionerna vilket jag tyckte var svårast och lägger till mycket mer if-satser datorn måste gå igenom.
-    #Sist kollar den upp och ner kollision
+
+    if golfball.y3 < blocky1 - 40 || golfball.y1 > blocky2 + 40 || golfball.x2 < blockx1 - 40 || golfball.x1 > blockx2 + 40
+      return false
+    end
     
     if golfball.x2 > blockx1 && golfball.x1 < blockx2
       if golfball.y1 >= blocky1 && golfball.y3 <= blocky2
         if golfball.x1 <= blockx1
           #Golfbollen åker vänster i ett block
-          $type_of_collision = "right"
+          $type_of_collision = "leftright"
           return true
         else
           #Golfbollen åker höger i ett block
-          $type_of_collision = "left"
+          $type_of_collision = "leftright"
           return true
         end
       elsif golfball.y3 >= blocky1 && golfball.y3 <= blocky2
         if golfball.x2 > blockx2
           #Upp åt höger
-          if $oldpos[0] <= blockx2
-            $type_of_collision = "down"
+          #Man kan tänka $oldpos[0] som x1 på spelaren och $oldpos[1] som y1
+          #Första villkoret är när inte hela spelaren vid oldpos är över kanten på hörnet
+          #Då kan det bara ske en ner-kollision. 
+          #Elsif-villkoret är när inte hela spelaren vid oldpos är över höjden av kanten på hörnet
+          #Då kan det bara ske en vänster-kollision
+          #Sen gör jag så tiden alltid blir positiv och repeterar för varje hörn.
+
+          if $oldpos[0] <= blockx2  #Villkoren överlappar varandra lite men innan den gör det i spelet kommer det alltid ske en kollision
+            $type_of_collision = "downup"
             return true
           elsif $oldpos[1] + golfball.height >= blocky1
-            $type_of_collision = "left"
+            $type_of_collision = "leftright"
             return true
           end
           
@@ -421,20 +457,20 @@ class Block
           tidy = (blocky1 - $oldpos[1]) / ($player.yspeed + $player.grav)
 
           if tidx < tidy
-            $type_of_collision = "left"
+            $type_of_collision = "leftright"
             return true
           else
-            $type_of_collision = "down"
+            $type_of_collision = "downup"
             return true
           end
         elsif golfball.x1 < blockx1
           #Upp åt vänster
 
           if $oldpos[0] + golfball.width >= blockx1
-            $type_of_collision = "down"
+            $type_of_collision = "downup"
             return true
           elsif $oldpos[1] + golfball.height >= blocky1
-            $type_of_collision = "right"
+            $type_of_collision = "leftright"
             return true
           end
          
@@ -442,59 +478,58 @@ class Block
           tidy = (blocky1-$oldpos[1]) / ($player.yspeed + $player.grav)
 
           if tidx < tidy
-            $type_of_collision = "right"
+            $type_of_collision = "leftright"
             return true
           else
-            $type_of_collision = "down"
+            $type_of_collision = "downup"
             return true
           end
         else
-          #Golfbollen faller på ett block 
-          $type_of_collision = "down"
+          $type_of_collision = "downup"
           return true
         end
       elsif golfball.y1 <= blocky2 && golfball.y3 >= blocky2
         if golfball.x2 > blockx2
           #Ner åt höger
           if $oldpos[0] <= blockx2
-            $type_of_collision = "up"
+            $type_of_collision = "downup"
             return true
           elsif $oldpos[1] <= blocky2
-            $type_of_collision = "left"
+            $type_of_collision = "leftright"
             return true
           end
 
           tidx = (blockx2 - $oldpos[0]) / $player.xspeed
           tidy = (blocky2 - $oldpos[1]) / ($player.yspeed + $player.grav)
           if tidx < tidy
-            $type_of_collision = "left"
+            $type_of_collision = "leftright"
             return true
           else
-            $type_of_collision = "up"
+            $type_of_collision = "downup"
             return true
           end
         elsif golfball.x1 < blockx1
           #Ner åt vänster
           if $oldpos[0] + golfball.width >= blockx1
-            $type_of_collision = "up"
+            $type_of_collision = "downup"
             return true
           elsif $oldpos[1] <= blocky2
-            $type_of_collision = "right"
+            $type_of_collision = "leftright"
             return true
           end
 
           tidx = (blockx1 - $oldpos[0]) / $player.xspeed
           tidy = (blocky2 - $oldpos[1]) / ($player.yspeed + $player.grav)
+
           if tidx < tidy
-            $type_of_collision = "right"
+            $type_of_collision = "leftright"
             return true
           else
-            $type_of_collision = "up"
+            $type_of_collision = "downup"
             return true
           end
         else
-          #Golfbollen åker upp i ett block
-          $type_of_collision = "up"
+          $type_of_collision = "downup"
           return true
         end
       end
@@ -534,9 +569,10 @@ class Goal
     blocky1 = @y
     blocky2 = @y + 30
   
+    #För kollision detektion. Samma i portal och movingblock klassen.
     if golfball.x2 > blockx1 && golfball.x1 < blockx2 
       if golfball.y3 >= blocky1 && golfball.y1 <= blocky2
-        $ballingoal = true
+        $finish = true
       end
     end
     return false
@@ -583,7 +619,6 @@ class Portal
 end
 
 class MovingBlock
-  attr_reader :x
   def initialize(x,y,width,height,color)
     @x = x
     @y = y
@@ -595,12 +630,13 @@ class MovingBlock
   end
 
   def draw()
+    #Slumpmässigt ändrar hastigheter och storlek
+    #x-hastigheten kan bara bli större och större
     @xadd += rand(-0.6..0.0)
     @yadd += rand(-0.2..0.2)
     @x += @xadd
     @y += @yadd
-    way = rand(0..1)
-    if way == 0
+    if rand(0..1) == 0
       @width += rand(0.0..2.0)
     else
       @height += rand(0.0..2.0)
@@ -622,7 +658,7 @@ class MovingBlock
   
     if golfball.x2 > blockx1 && golfball.x1 < blockx2 
       if golfball.y3 >= blocky1 && golfball.y1 <= blocky2
-        $ballingoal = true
+        $finish = true
       end
     end
     return false
@@ -632,9 +668,8 @@ end
 #Meny och UI klasser
 
 class Menu
-  def initialize()
-  end
 
+  #Ritar ut alla knappar och texter för menyn
   def draw()
     #level1
 
@@ -710,22 +745,25 @@ end
 
 class Howmanyshots
   def draw()
+    def initialize()
+      @oldsec = Time.now.strftime("%S").to_i
+    end
+
     #På nivå 3 räknar den ut sekundrarna efter man startat nivån
-    #Om man kör under midnatt kommer man få negativa poäng. Man kan iallafall inte fuska.
+    #Den adderar en poäng varje gång sekundvisaren ändras alltså sekundrarna efter start. 
+    #Ibland kan man starta precis innan en sekundvisaren ändras vilket innebär att man börjar ungefär vid 1 sekund
+    #men det är så lite skillnad så det gör inget.
     if $level == 3
-      $howmanyshots = Time.now.strftime("%H%M%S")
-      hour = $howmanyshots[0..1].to_i - $beginTime[0..1].to_i 
-      hour *= 3600
+      second = Time.now.strftime("%S").to_i
 
-      minute = $howmanyshots[2..3].to_i - $beginTime[2..3].to_i 
-      minute *= 60
+      if second != @oldsec
+        $score += 1
+      end
 
-      second = $howmanyshots[4..5].to_i - $beginTime[4..5].to_i 
-
-      $howmanyshots = hour + minute + second
+      @oldsec = second
     end
     Text.new(
-      "#{$howmanyshots}",
+      "#{$score}",
       x: 0, y: 0,
       size: 40,
       color: 'white',
@@ -747,16 +785,16 @@ class PowerMeter
   end
 
   #Beskrivning: Funktionen ritar pilen och kraftmätaren
-  #Rotationen på pilen utgår från period som är radian. 
-  #Jag behöver bara överföra det till grader och sen justera det till startvärdet och sen ta det åt andra hållet med minus
+  #Rotationen på pilen utgår från variabeln period som är radian. 
+  #Jag behöver bara överföra det till grader och sen justera det till startvärdet och sen ta det åt andra hållet med minus.
   #På kraftmätaren blir röda värdet på färgen mer och mer och gröna mindre och mindre och den är grön i början
   #Längden justeras med color och för att den ska växa uppåt ändras y positionen
   #
   #Parametrar:
-  #color - int styrkan av slaget just nu
-  #period - float en radian som beskriver vilken rotation pilen ska ha
-  #playerx - int spelarens x-värde 
-  #playery - int spelarens y-koordinate. Kraftmätarens position beror på spelaren
+  #color - int, styrkan av slaget just nu
+  #period - float, en radian som beskriver vilken rotation pilen ska ha
+  #playerx - int, spelarens x-värde 
+  #playery - int, spelarens y-koordinate. Kraftmätarens position beror på spelaren
   def draw(color,period,playerx,playery)
     Sprite.new(
       "pil.png",
@@ -777,22 +815,24 @@ class PowerMeter
 
   #Beskrivning: Funktionen räknar ut positionen på pilen
 
-  #Parametrar: playerx int spelarens x-värde
-  #playery int spelarens y-värde
-  #playerwidth - int spelarens bredd
-  #playerheight - int spelarens höjd
-  #period - float float en radian som beskriver var i en cirkel runt spelaren man är i
+  #Parametrar: playerx - int, spelarens x-värde
+  #playery - int, spelarens y-värde
+  #playerwidth - int, spelarens bredd
+  #playerheight - int, spelarens höjd
+  #period - float, en radian som beskriver var i en cirkel runt spelaren man är i
+  #
+  #return: inget
   def move(playerx,playery,playerwidth,playerheight,period)
     @x = playerx + (playerwidth - @width)/2 + (Math.sin(period) * 40).to_i
     @y = playery + (playerheight - @height)/2 + (Math.cos(period) * 40).to_i
   end
 end
 
-#listeners
+#lyssnare
 
 on :key_held do |event|
   case event.key 
-  #Ändra position på power meter
+  #Ändra position på power meter med två grader
   when 'left' 
     period += Math::PI/90
   when 'right'
@@ -823,18 +863,21 @@ on :mouse_down do |event|
   case event.button
   #Om man klickar på knapparna i menyerna
   when :left
+    #Här lägger jag till alla objekt för en nivå, för blocken kan man ändra position, storlek och färg.
+    #Måste ha globalt räckvidd på player och blocks variablerna eftersom jag inte kan skapa de i updaten eftersom de kommer att glömmas bort varje frame.
     if $menu && $level1.contains?(event.x,event.y)
       $menu = false
       $level = 1
       
       $player = nil
-      $player = Player.new(120,100) #Här lägger jag till alla objekt för en nivå, för blocken kan man ändra position, storlek och färg.
-      #Måste ha globalt räckvidd på player och blocks variablerna eftersom jag inte kan skapa de i updaten eftersom de kommer att förstöras varje frame.
+      $player = Player.new(85,310)
       $blocks = []
       $blocks << Block.new(0,-20,Window.width,20,[0,0,0,0])
       $blocks << Block.new(-20,0,20,Window.height,[0,0,0,0])
       $blocks << Block.new(0,Window.height,Window.width,20,[0,0,0,0])
       $blocks << Block.new(Window.width,0,20,Window.height,[0,0,0,0])
+
+      $blocks << Block.new(75,250,50,50,"white")
 
       $blocks << Block.new(0,350,Window.width-320,100,"white")
       $blocks << Block.new(220,200,350,150,"white")
@@ -879,10 +922,9 @@ on :mouse_down do |event|
       $blocks << Portal.new(100, 470,)
       $blocks << Goal.new(Window.width-300,130)
     elsif $menu && $level3.contains?(event.x,event.y)
-      $beginTime = Time.now.strftime("%H%M%S")
       $menu = false
       $level = 3
-      index = 5
+      index = 7
       onetime2 = false
 
       $player = nil
@@ -892,7 +934,9 @@ on :mouse_down do |event|
       $blocks << Block.new(0,0,20,Window.height,"gray")
       $blocks << Block.new(0,Window.height-20,Window.width,20,"gray")
       $blocks << Block.new(Window.width-20,0,20,Window.height,"gray")
-      $blocks << Block.new(Window.width/2 - 50,Window.height/2 - 50,100,100,"gray")
+      $blocks << Block.new(Window.width/2 - 150,Window.height/2 - 50,300,100,"gray")
+      $blocks << Block.new(200,Window.height/2 - 50,300,100,"gray")
+      $blocks << Block.new(3 * Window.width/4 - 50,Window.height/2 - 50,300,100,"gray")
     elsif $menu && $quit.contains?(event.x,event.y)
       close
     end
@@ -901,7 +945,7 @@ end
 
 on :key_up do |event|
   case event.key
-  #Om man släpper tangentbordet blir en boolean true som säger att ett slag ska ske, skillnad mellan nivå 3 och andra nivåer
+  #Om man släpper space knappen blir en boolean true som säger att ett slag ska ske om de andra villkoren gäller, skillnad mellan nivå 3 och andra nivåer
   when 'space'
     if $level == 3
       if onetime2
@@ -910,7 +954,7 @@ on :key_up do |event|
       end
     elsif $player.xspeed == 0 && $player.yspeed == 0 && $player.grav == 0
       shot = true
-      $howmanyshots += 1
+      $score += 1
     end
   #Här stängs antingen spelet ner om man är i menyn eller går man till menyn genom att meny boolen blir sann och progressen resetas
   when 'escape'
@@ -918,12 +962,13 @@ on :key_up do |event|
       close
     end
     $menu = true
-    $ballingoal = false
-    $howmanyshots = 0
+    $finish = false
+    $score = 0
   end
 end
 
 #update
+
 #Här skapar jag variabler som är instanser av klasser som gäller för hela programmet alltså behöver bara göra det en gång
 menu = Menu.new
 howmanyshots = Howmanyshots.new
@@ -937,7 +982,7 @@ update do
   background.draw()
   
   #Om man är i mål eller om man måste starta om
-  if $ballingoal
+  if $finish
     if onetime
       onetime = false
       die()
@@ -959,15 +1004,18 @@ update do
     onetime = true
   else
     #Det som sker i nivåerna
-    #Här lägger den till block som rör sig i slumpmässiga intervall
+    #Här läggs blocken som rör sig i slumpmässiga intervall till.
+    #Den börjar på indexet efter de vanliga blocken och efter ett tag resetar den till startpunkten
+    #Då försvinner de tidigare blocket som var på de indexen. Antalet block kommer då vara konstant efter ett tag
     if $level == 3
       if frames > 0
         frames -= 1
       else
         frames = rand(1..75)
+        $blocks[index] = nil
         $blocks[index] = MovingBlock.new(2000,rand(0..1080),rand(50..200),rand(50..400),[rand(0..1.0),rand(0..1.0),rand(0..1.0),rand(0.5..1.0)])
         if index == 20
-          index = 4
+          index = 6
         end
         index += 1
       end
@@ -976,20 +1024,23 @@ update do
     #I det under hanteras kollisionen. Den går igenom kollisionen i alla block och ritar upp alla block, uppdaterar oldpos och ser om man står stilla
     i = 0
     collision = false
-    while i < $blocks.length
-      $blocks[i].draw
-
-      if $level == 3
-        if $blocks[i].collisionDetection($player.golfball)
+    if $level == 3   #Kan göra en while loop och ha if $level == 3 inuti den men det här är mer effektivt
+      while i < $blocks.length
+        $blocks[i].draw
+        if $blocks[i].collisionDetection($player.golfball) #Kan inte ha med && !collision för då kan den missa blocken som slutar spelet i nivå 3.
           collision = true
           onetime2 = true
         end
-      else
-        if $blocks[i].collisionDetection($player.golfball) && !collision
+        i += 1
+      end
+    else
+      while i < $blocks.length
+        $blocks[i].draw
+        if $blocks[i].collisionDetection($player.golfball) && !collision #!collision för att den inte behöver fortsätta när en kollision redan skett
           collision = true
         end
+        i += 1
       end
-      i += 1
     end
 
     if !collision
