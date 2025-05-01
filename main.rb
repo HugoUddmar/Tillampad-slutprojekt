@@ -231,16 +231,11 @@ class Block
     
     if golfball.x2 > blockx1 && golfball.x1 < blockx2
       if golfball.y1 >= blocky1 && golfball.y3 <= blocky2
-        if golfball.x1 <= blockx1
-          #Golfbollen åker vänster i ett block
-          $type_of_collision = "leftright"
-          return true
-        else
-          #Golfbollen åker höger i ett block
-          $type_of_collision = "leftright"
-          return true
-        end
+        #Vanlig vänster-högerkollision
+        $type_of_collision = "leftright"
+        return true
       elsif golfball.y3 >= blocky1 && golfball.y3 <= blocky2
+        #Hörnkollisionerna
         if golfball.x2 > blockx2
           #Upp åt höger
           #Man kan tänka $oldpos[0] som x1 på spelaren och $oldpos[1] som y1
@@ -290,6 +285,7 @@ class Block
             return true
           end
         else
+          #Vanlig upp-nerkollision
           $type_of_collision = "downup"
           return true
         end
@@ -334,6 +330,7 @@ class Block
             return true
           end
         else
+          #Vanlig upp-nerkollision
           $type_of_collision = "downup"
           return true
         end
