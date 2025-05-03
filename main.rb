@@ -166,7 +166,8 @@ class Player
     if bool
       #Först räknas skillnaden i x och y-led ut mellan mittpunkterna på pilen och spelaren.
       #Sen räknar man ut hur lång hypotenusan/avståndet mellan pilen och spelaren är och
-      #delar skillnaden i x och y-led med avståndet för att få en lite realistisk kaströrelse
+      #delar skillnaden i x och y-led med avståndet så att man får lika mycket kraft i alla riktningar.
+      #Annars hade man fått större starthastighet i 45 grader än 0 grader.
       @xmultiplier = powermeterx + powermeterwidth/2 - @middlepoint[0]
       @ymultiplier = powermetery + powermeterheight/2 - @middlepoint[1]
       @zmulitplier = Math.sqrt(@ymultiplier ** 2 + @xmultiplier ** 2)
