@@ -1,6 +1,6 @@
 # Fil: main.rb
 # Författare: Hugo Uddmar
-# Datum 2025-04-28
+# Datum 2025-05-08
 # Beskrivning: Ett minigolfspel 
 
 #initiera
