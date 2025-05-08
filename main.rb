@@ -207,7 +207,7 @@ class Block
   #Kollision för rektanglar. Detektion och vilken typ av kollision.
   #Jag tänkte göra det för en cirkel och rektangel men jag har spenderat så mycket tid på funktionen och jag är väldigt nöjd med den.
   #Parametrar: golfball - Rectangle: Position och storlek som båda är i int som används i villkoren i funktionen
-  #Return: inget
+  #Return: true/false 
   def collission_detected?(golfball)
     #Först initieras variablerna för koordinaterna på kanterna på rektanglarna.
     #x1 = vänstra kanten, x2 = högra kanten, y1 = toppkanten, y2/y3 = bottenkanten. 
@@ -239,12 +239,12 @@ class Block
         #Hörnkollisionerna
         if golfball.x2 > blockx2
           #Upp åt höger
-          #Man kan tänka $oldpos[0] som x1 på spelaren och $oldpos[1] som y1
+          #Man kan tänka $oldpos[0] som x1 på spelarens gamla position och $oldpos[1] som y1
           #Första villkoret är när inte hela spelaren vid oldpos är över kanten på hörnet
-          #Då kan det bara ske en ner-kollision. 
+          #Då kan det bara ske en nerup-kollision. 
           #Elsif-villkoret är när inte hela spelaren vid oldpos är över höjden av kanten på hörnet
-          #Då kan det bara ske en vänster-kollision
-          #Sen gör jag så tiden alltid blir positiv och repeterar för varje hörn.
+          #Då kan det bara ske en vänsterhöger-kollision
+          #Sen när det finns flera möjliga kollisioner gör jag så tiden alltid blir positiv och tar den minsta tiden och repeterar för varje hörn.
 
           if $oldpos[0] <= blockx2  #Villkoren överlappar varandra lite men innan den gör det i spelet kommer det alltid ske en kollision
             $type_of_collision = "downup"
@@ -523,7 +523,8 @@ class Menu
   end
 
   # Beskrivning: En funktion som tar bokstäverna i en sträng returnar värdet på 
-  # summeringen av ordningen på bokstäverna i alfabetet / 31.
+  # summeringen av ordningen på bokstäverna i alfabetet / 31. Om dekrypteringen inte går jämt ut alltså
+  # När någon har försökt fuska skapas ett fel och programmet slutar.
   #
   # Parameter: string - string, bokstäverna som man vill dekryptera
   # Return: value - int, dekrypterade värdet
@@ -744,11 +745,11 @@ end
 class Howmanyshots
   def draw()
     def initialize()
-      @oldsec = Time.now.strftime("%S").to_i
+      @oldsec = Time.now.strftime("%S").to_i 
     end
 
     #På nivå 3 räknar den ut sekundrarna efter man startat nivån
-    #Den adderar en poäng varje gång sekundvisaren ändras alltså sekundrarna efter start. 
+    #Den adderar en poäng varje gång sekundvisaren ändras alltså sekundrarna efter start genom att jämföra en gammal sekundvisare med den i nuläget.
     #Ibland kan man starta precis innan en sekundvisaren ändras vilket innebär att man börjar ungefär vid 1 sekund
     #men det är så lite skillnad så det gör inget.
     if $level == 3
