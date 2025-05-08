@@ -52,6 +52,8 @@ onetime2 = true
 
 #Player
 
+#Spelaren alltså golfbollen. Den ser ut som en boll men fungerar som en kvadrat.
+#Den blir påverkad av gravitation och slag och kolliderar med block.
 class Player
   attr_reader :x
   attr_reader :y
@@ -185,6 +187,7 @@ end
 
 #Alla block klasser
 
+#Block som man kan ändra färg på. De är rektanglar och fungerar som hinder med spelaren.
 class Block
   def initialize(x,y,width,height,color)
     @x = x
@@ -341,6 +344,7 @@ class Block
   end
 end
 
+#Målet som är en gul rektangel med en blå text 'Goal' på. Om man kolliderar med den har kört klart nivån.
 class Goal
   def initialize(x,y)
     @x = x
@@ -382,6 +386,7 @@ class Goal
   end
 end
 
+#Portalerna som man kan teleportera mellan i nivå 2 om man kolliderar.
 class Portal
   def initialize(x,y)
     @x = x
@@ -421,6 +426,7 @@ class Portal
   end
 end
 
+#Blocket i level 3 som åker från höger till vänster med en slumpmässig färg. Hastigheten och storleken ändras slumpmässigt.
 class MovingBlock
   def initialize(x,y,width,height,color)
     @x = x
@@ -470,6 +476,7 @@ end
 
 #Meny och UI klasser
 
+#Menyn, hantering av highscore och när man är klar med en nivå.
 class Menu
   def initialize()
     #alfabetet för kryptering
@@ -732,6 +739,7 @@ class Menu
   end
 end
 
+#Backgrunden som är en färg.
 class Background
   def initialize(color)
     @color = color
@@ -742,6 +750,7 @@ class Background
   end
 end
 
+#Visaren längst uppe åt vänster som visar hur många slag man gjort eller sekunder som gått sen man startade spelet i nivå 3.
 class Howmanyshots
   def draw()
     def initialize()
@@ -771,6 +780,7 @@ class Howmanyshots
   end
 end
 
+#Kraftmätaren och pilen. Följer efter spelarens position.
 class PowerMeter
   attr_reader :x
   attr_reader :y
